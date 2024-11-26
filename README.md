@@ -12,6 +12,16 @@ This is a `go 1.23.0` project
 2. go run main.go # A fake training will start here
 ```
 
+## Done
+
+- [x] Create a random training with durations and power
+- [x] Show an overlay with ebitenengine
+- [x] Create basic sprites
+- [x] Make the sprites update every second with data from the random trainer
+- [x] Make the training have a sense of time, it should progress every second
+
+
 ## TODO
 
--  [ ] make the actually comminucate with my bike trainer which includes consuming data and feeding the trainer with information.
+- [ ] Comminucate with my bike trainer which includes consuming data and feeding the trainer with information.
+- [ ] Display a training with increasing or descreasing power
