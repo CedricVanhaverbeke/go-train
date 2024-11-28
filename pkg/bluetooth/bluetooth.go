@@ -85,9 +85,13 @@ func Scan() { // Enable BLE interface.
 	}
 
 	char := chars[0]
-	char.EnableNotifications(func(buf []byte) {
+	err = char.EnableNotifications(func(buf []byte) {
 		println("data:", uint8(buf[1]))
 	})
+
+	if err != nil {
+		panic(err)
+	}
 
 	// block
 	select {}
