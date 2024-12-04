@@ -2,6 +2,7 @@ package bluetooth
 
 import (
 	"fmt"
+	"sync"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -22,12 +23,13 @@ func Scan() { // Enable BLE interface.
 	}
 
 	fmt.Println("Finding trainer...")
-	done := make(chan bool)
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
 		err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
 			if device.Address.String() == zwiftHubUUID {
 				zwiftHub = &device
-				done <- true
+				wg.Done()
 			}
 		})
 
@@ -36,7 +38,7 @@ func Scan() { // Enable BLE interface.
 		}
 	}()
 
-	<-done
+	wg.Wait()
 	err = adapter.StopScan()
 	if err != nil {
 		panic(err)

@@ -3,12 +3,14 @@ package main
 import (
 	"overlay/game"
 	"overlay/internal/training"
+	"overlay/pkg/bluetooth"
 	"overlay/pkg/consumer"
 	"overlay/pkg/producer"
 	"overlay/pkg/trainer"
 )
 
 func main() {
+	bluetooth.Scan()
 	// 1. Create a training
 	t := training.NewRandom()
 
