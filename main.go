@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
-	bluetooth.Scan()
+	err := bluetooth.Scan()
+	if err != nil {
+		panic(err)
+	}
 	// 1. Create a training
 	t := training.NewRandom()
 

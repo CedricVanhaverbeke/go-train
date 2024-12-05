@@ -1,8 +1,9 @@
 package bluetooth
 
 import (
+	"context"
 	"fmt"
-	"sync"
+	"time"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -15,73 +16,114 @@ var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
 // this is the case wit hall uuids
 var instantaneousPower = "00002ad2-0000-1000-8000-00805f9b34fb"
 
-func Scan() { // Enable BLE interface.
+func Scan() error {
 	err := adapter.Enable()
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println("Finding trainer...")
-	char := DiscoverFTMSDevice()
+	char, err := DiscoverFTMSDevice()
+	if err != nil {
+		return err
+	}
 
 	err = char.EnableNotifications(func(buf []byte) {
 		println("data:", uint8(buf[1]))
 	})
 
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 // DiscoverFTMSDevice checks every available device
 // having the FTMS service. It returns the
 // first device that has FTMS enabled and
 // instantaneous power
-func DiscoverFTMSDevice() bluetooth.DeviceCharacteristic {
-	var wg sync.WaitGroup
-	found := make(chan bluetooth.ScanResult, 1)
-	devChar := make(chan bluetooth.DeviceCharacteristic)
+func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
+	found := make(chan bluetooth.ScanResult)
+	devChar := make(chan *bluetooth.DeviceCharacteristic)
+	scan := make(chan bool)
+
+	scanned := map[string]bool{}
 
 	ftms, err := bluetooth.ParseUUID(ftmsUUID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	serviceUuid, err := bluetooth.ParseUUID(instantaneousPower)
 	if err != nil {
-		panic("could not get service UUID")
+		return nil, err
 	}
 
-	wg.Add(1)
-	go func() {
-		err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
-			fmt.Println("Found device, checking FTMS")
-			found <- device
-		})
+	continueScanning := func(s string) {
+		fmt.Println(s)
+		scan <- true
+	}
 
-		if err != nil {
-			panic(err)
+	go func() {
+		for range scan {
+			fmt.Println("Scanning bluetooth devices...")
+			err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
+				f := make(chan bluetooth.ScanResult)
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+
+				go func() {
+					if !scanned[device.Address.String()] {
+						scanned[device.Address.String()] = true
+
+						fmt.Println("Found device with uuid: " + device.Address.String())
+						f <- device
+						_ = adapter.StopScan()
+						return
+					}
+				}()
+
+				select {
+				case device := <-f:
+					found <- device
+				case <-ctx.Done():
+					fmt.Println("timeout exceeded")
+					devChar <- nil
+					return
+				}
+			})
+
+			if err != nil {
+				panic(err)
+			}
 		}
 	}()
 
 	go func() {
 		for scanResult := range found {
-			fmt.Println("Checking device")
-			device, err := adapter.Connect(scanResult.Address, bluetooth.ConnectionParams{})
+			fmt.Println("Checking device FTMS")
+
+			device, err := adapter.Connect(
+				scanResult.Address,
+				bluetooth.ConnectionParams{
+					ConnectionTimeout: bluetooth.NewDuration(1 * time.Second),
+				},
+			)
 			if err != nil {
-				fmt.Println("Cannot connect to device")
+				continueScanning("Cannot connect to device")
 				continue
 			}
 
 			dservices, err := device.DiscoverServices([]bluetooth.UUID{ftms})
 			if err != nil {
-				fmt.Println("Device is not ftms ready")
+				continueScanning("Device is not ftms ready")
 				continue
 			}
 
 			ftmsOk := len(dservices) == 1
 			if !ftmsOk {
-				fmt.Println("Device is not ftms ready")
+				continueScanning("Device is not ftms ready")
 				continue
 			}
 
@@ -89,19 +131,18 @@ func DiscoverFTMSDevice() bluetooth.DeviceCharacteristic {
 
 			chars, err := service.DiscoverCharacteristics([]bluetooth.UUID{serviceUuid})
 			if err != nil {
-				fmt.Println("Could not get characteristics")
+				continueScanning("Could not get characteristics")
 				continue
 			}
 
 			charsOk := len(chars) == 1
 			if !charsOk {
-				fmt.Println("Device does not have instantaneous power characteristic")
+				continueScanning("Device does not have instantaneous power characteristic")
 				continue
 			}
 
 			char := chars[0]
-			devChar <- char
-			wg.Done()
+			devChar <- &char
 		}
 	}()
 
@@ -112,6 +153,14 @@ func DiscoverFTMSDevice() bluetooth.DeviceCharacteristic {
 		}
 	}()
 
-	wg.Wait()
-	return <-devChar
+	// start scanning
+	scan <- true
+
+	char := <-devChar
+	fmt.Println("Scanning done...")
+	if char == nil {
+		return nil, fmt.Errorf("FTMS device not found")
+	}
+
+	return char, nil
 }
