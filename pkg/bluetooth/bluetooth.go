@@ -3,6 +3,8 @@ package bluetooth
 import (
 	"context"
 	"fmt"
+	"log"
+	"log/slog"
 	"time"
 
 	"tinygo.org/x/bluetooth"
@@ -22,14 +24,16 @@ func Scan() error {
 		panic(err)
 	}
 
-	fmt.Println("Finding trainer...")
+	slog.Info("Finding trainer...")
 	char, err := DiscoverFTMSDevice()
 	if err != nil {
 		return err
 	}
 
 	err = char.EnableNotifications(func(buf []byte) {
-		println("data:", uint8(buf[1]))
+		log.Printf(" %b", buf[:])
+		power := int(buf[2]) | int(buf[3])<<8 // Little-endian
+		fmt.Println(power / 10)
 	})
 
 	if err != nil {
@@ -61,13 +65,13 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	}
 
 	continueScanning := func(s string) {
-		fmt.Println(s)
+		slog.Info(s)
 		scan <- true
 	}
 
 	go func() {
 		for range scan {
-			fmt.Println("Scanning bluetooth devices...")
+			slog.Info("Scanning bluetooth devices...")
 			err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
 				f := make(chan bluetooth.ScanResult)
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -77,7 +81,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 					if !scanned[device.Address.String()] {
 						scanned[device.Address.String()] = true
 
-						fmt.Println("Found device with uuid: " + device.Address.String())
+						slog.Info("Found device with uuid: " + device.Address.String())
 						f <- device
 						_ = adapter.StopScan()
 						return
@@ -88,7 +92,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 				case device := <-f:
 					found <- device
 				case <-ctx.Done():
-					fmt.Println("timeout exceeded")
+					slog.Info("bluetooth scanning timeout exceeded")
 					devChar <- nil
 					return
 				}
@@ -102,7 +106,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 
 	go func() {
 		for scanResult := range found {
-			fmt.Println("Checking device FTMS")
+			slog.Info("Checking device FTMS")
 
 			device, err := adapter.Connect(
 				scanResult.Address,
@@ -135,6 +139,8 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 				continue
 			}
 
+			fmt.Printf("%+v", chars)
+
 			charsOk := len(chars) == 1
 			if !charsOk {
 				continueScanning("Device does not have instantaneous power characteristic")
@@ -149,7 +155,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	defer func() {
 		err := adapter.StopScan()
 		if err != nil {
-			fmt.Println("Could not stop scanning")
+			slog.Info("Could not stop scanning")
 		}
 	}()
 
@@ -157,7 +163,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	scan <- true
 
 	char := <-devChar
-	fmt.Println("Scanning done...")
+	slog.Info("Scanning done...")
 	if char == nil {
 		return nil, fmt.Errorf("FTMS device not found")
 	}
