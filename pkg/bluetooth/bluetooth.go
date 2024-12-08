@@ -12,11 +12,16 @@ import (
 
 var adapter = bluetooth.DefaultAdapter
 var zwiftHubUUID = "c96fb5f7-b4d5-262e-7baf-0a479225f3ab"
-var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
+
+// var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
+var cyclingPower = "00001818-0000-1000-8000-00805f9b34fb"
 
 // notice that the only thing that's different from the ftmsUUID is the first segment.
 // this is the case wit hall uuids
-var instantaneousPower = "00002ad2-0000-1000-8000-00805f9b34fb"
+// file:///Users/cedricvanhaverbeke/Downloads/GATT_Specification_Supplement_v5.pdf
+// https://gist.github.com/sam016/4abe921b5a9ee27f67b3686910293026
+// var indoorBikeData = "00002ad2-0000-1000-8000-00805f9b34fb"
+var cyclingPowerMeasureMent = "00002a63-0000-1000-8000-00805f9b34fb"
 
 func Scan() error {
 	err := adapter.Enable()
@@ -31,9 +36,15 @@ func Scan() error {
 	}
 
 	err = char.EnableNotifications(func(buf []byte) {
-		log.Printf(" %b", buf[:])
-		power := int(buf[2]) | int(buf[3])<<8 // Little-endian
-		fmt.Println(power / 10)
+		log.Printf(
+			" %b",
+			buf[:],
+		)
+		// Extract instantaneous power (signed 16-bit integer, little-endian)
+		power := int16(buf[2]) | int16(buf[3])<<8
+
+		// Log the decoded power
+		log.Printf("Instantaneous Power: %d watts", power)
 	})
 
 	if err != nil {
@@ -54,12 +65,12 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 
 	scanned := map[string]bool{}
 
-	ftms, err := bluetooth.ParseUUID(ftmsUUID)
+	cyclingPowerService, err := bluetooth.ParseUUID(cyclingPower)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceUuid, err := bluetooth.ParseUUID(instantaneousPower)
+	serviceUuid, err := bluetooth.ParseUUID(cyclingPowerMeasureMent)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +85,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 			slog.Info("Scanning bluetooth devices...")
 			err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
 				f := make(chan bluetooth.ScanResult)
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 
 				go func() {
@@ -106,7 +117,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 
 	go func() {
 		for scanResult := range found {
-			slog.Info("Checking device FTMS")
+			slog.Info("Checking device...")
 
 			device, err := adapter.Connect(
 				scanResult.Address,
@@ -119,15 +130,15 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 				continue
 			}
 
-			dservices, err := device.DiscoverServices([]bluetooth.UUID{ftms})
+			dservices, err := device.DiscoverServices([]bluetooth.UUID{cyclingPowerService})
 			if err != nil {
-				continueScanning("Device is not ftms ready")
+				continueScanning("Device does not have cycling power enabled")
 				continue
 			}
 
-			ftmsOk := len(dservices) == 1
-			if !ftmsOk {
-				continueScanning("Device is not ftms ready")
+			hasCyclingPower := len(dservices) == 1
+			if !hasCyclingPower {
+				continueScanning("Device does not have cycling power enabled")
 				continue
 			}
 
@@ -135,11 +146,9 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 
 			chars, err := service.DiscoverCharacteristics([]bluetooth.UUID{serviceUuid})
 			if err != nil {
-				continueScanning("Could not get characteristics")
+				continueScanning("Could not get characteristics " + err.Error())
 				continue
 			}
-
-			fmt.Printf("%+v", chars)
 
 			charsOk := len(chars) == 1
 			if !charsOk {
@@ -165,7 +174,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	char := <-devChar
 	slog.Info("Scanning done...")
 	if char == nil {
-		return nil, fmt.Errorf("FTMS device not found")
+		return nil, fmt.Errorf("Supported device not found")
 	}
 
 	return char, nil
