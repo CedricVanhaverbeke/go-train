@@ -13,7 +13,7 @@ import (
 var adapter = bluetooth.DefaultAdapter
 var zwiftHubUUID = "c96fb5f7-b4d5-262e-7baf-0a479225f3ab"
 
-// var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
+var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
 var cyclingPower = "00001818-0000-1000-8000-00805f9b34fb"
 
 // notice that the only thing that's different from the ftmsUUID is the first segment.
@@ -36,14 +36,8 @@ func Scan() error {
 	}
 
 	err = char.EnableNotifications(func(buf []byte) {
-		log.Printf(
-			" %b",
-			buf[:],
-		)
 		// Extract instantaneous power (signed 16-bit integer, little-endian)
 		power := int16(buf[2]) | int16(buf[3])<<8
-
-		// Log the decoded power
 		log.Printf("Instantaneous Power: %d watts", power)
 	})
 
@@ -64,6 +58,16 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	scan := make(chan bool)
 
 	scanned := map[string]bool{}
+
+	ftmsService, err := bluetooth.ParseUUID(ftmsUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	// ftmsControlPoint, err := bluetooth.ParseUUID()
+	if err != nil {
+		return nil, err
+	}
 
 	cyclingPowerService, err := bluetooth.ParseUUID(cyclingPower)
 	if err != nil {
@@ -155,6 +159,19 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 				continueScanning("Device does not have instantaneous power characteristic")
 				continue
 			}
+
+			ftmsServices, err := device.DiscoverServices([]bluetooth.UUID{ftmsService})
+			if err != nil {
+				continueScanning("Could not find ftms service")
+			}
+
+			hasFtms := len(ftmsServices) == 1
+			if !hasFtms {
+				continueScanning("Could not find ftms service")
+			}
+
+			ftms := ftmsServices[0]
+			// check for chars, control point should be in there
 
 			char := chars[0]
 			devChar <- &char
