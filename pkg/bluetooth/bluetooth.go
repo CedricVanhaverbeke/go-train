@@ -12,17 +12,6 @@ import (
 
 var adapter = bluetooth.DefaultAdapter
 
-var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
-var fitnessMachineControlPointUUID = "00002ad9-0000-1000-8000-00805f9b34fb"
-var cyclingPower = "00001818-0000-1000-8000-00805f9b34fb"
-
-// notice that the only thing that's different from the ftmsUUID is the first segment.
-// this is the case wit hall uuids
-// file:///Users/cedricvanhaverbeke/Downloads/GATT_Specification_Supplement_v5.pdf
-// https://gist.github.com/sam016/4abe921b5a9ee27f67b3686910293026
-// var indoorBikeData = "00002ad2-0000-1000-8000-00805f9b34fb"
-var cyclingPowerMeasureMent = "00002a63-0000-1000-8000-00805f9b34fb"
-
 func Scan() error {
 	err := adapter.Enable()
 	if err != nil {
@@ -30,7 +19,7 @@ func Scan() error {
 	}
 
 	slog.Info("Finding trainer...")
-	char, ftmsChar, err := DiscoverFTMSDevice()
+	char, ftmsChar, err := discover()
 	fmt.Println(ftmsChar)
 	if err != nil {
 		return err
@@ -49,11 +38,12 @@ func Scan() error {
 	return nil
 }
 
-// DiscoverFTMSDevice checks every available device
-// having the FTMS service. It returns the
-// first device that has FTMS enabled and
-// instantaneous power
-func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
+// discover checks every available device
+// having the FTMS service and cyling power service.
+// it returns two channels. It returns two bluetooth characteristics.
+// the first char can be used to get power notifications and
+// the second char can be used to set power on the device
+func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	found := make(chan bluetooth.ScanResult)
 	devChar := make(chan *bluetooth.DeviceCharacteristic)
 	ftmsCP := make(chan *bluetooth.DeviceCharacteristic)
@@ -61,26 +51,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCha
 
 	scanned := map[string]bool{}
 
-	ftmsService, err := bluetooth.ParseUUID(ftmsUUID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ftmsControlPoint, err := bluetooth.ParseUUID(fitnessMachineControlPointUUID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cyclingPowerService, err := bluetooth.ParseUUID(cyclingPower)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	serviceUuid, err := bluetooth.ParseUUID(cyclingPowerMeasureMent)
-	if err != nil {
-		return nil, nil, err
-	}
-
+	// inner function that starts a new scan operation
 	continueScanning := func(s string) {
 		slog.Info(s)
 		scan <- true
