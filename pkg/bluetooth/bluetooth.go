@@ -14,6 +14,7 @@ var adapter = bluetooth.DefaultAdapter
 var zwiftHubUUID = "c96fb5f7-b4d5-262e-7baf-0a479225f3ab"
 
 var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
+var fitnessMachineControlPointUUID = "00002ad9-0000-1000-8000-00805f9b34fb"
 var cyclingPower = "00001818-0000-1000-8000-00805f9b34fb"
 
 // notice that the only thing that's different from the ftmsUUID is the first segment.
@@ -55,6 +56,7 @@ func Scan() error {
 func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	found := make(chan bluetooth.ScanResult)
 	devChar := make(chan *bluetooth.DeviceCharacteristic)
+	ftmsCP := make(chan *bluetooth.DeviceCharacteristic)
 	scan := make(chan bool)
 
 	scanned := map[string]bool{}
@@ -64,7 +66,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 		return nil, err
 	}
 
-	// ftmsControlPoint, err := bluetooth.ParseUUID()
+	ftmsControlPoint, err := bluetooth.ParseUUID(fitnessMachineControlPointUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -171,10 +173,15 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 			}
 
 			ftms := ftmsServices[0]
-			// check for chars, control point should be in there
+			fmtsControlPointChar, err := ftms.DiscoverCharacteristics(
+				[]bluetooth.UUID{ftmsControlPoint},
+			)
+			if err != nil {
+				continueScanning("Could not scan all characteristics of ftms service")
+			}
 
-			char := chars[0]
-			devChar <- &char
+			devChar <- &(chars[0])
+			ftmsCP <- &(fmtsControlPointChar[0])
 		}
 	}()
 
