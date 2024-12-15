@@ -11,7 +11,6 @@ import (
 )
 
 var adapter = bluetooth.DefaultAdapter
-var zwiftHubUUID = "c96fb5f7-b4d5-262e-7baf-0a479225f3ab"
 
 var ftmsUUID = "00001826-0000-1000-8000-00805f9b34fb"
 var fitnessMachineControlPointUUID = "00002ad9-0000-1000-8000-00805f9b34fb"
@@ -31,7 +30,8 @@ func Scan() error {
 	}
 
 	slog.Info("Finding trainer...")
-	char, err := DiscoverFTMSDevice()
+	char, ftmsChar, err := DiscoverFTMSDevice()
+	fmt.Println(ftmsChar)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func Scan() error {
 // having the FTMS service. It returns the
 // first device that has FTMS enabled and
 // instantaneous power
-func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
+func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	found := make(chan bluetooth.ScanResult)
 	devChar := make(chan *bluetooth.DeviceCharacteristic)
 	ftmsCP := make(chan *bluetooth.DeviceCharacteristic)
@@ -63,22 +63,22 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 
 	ftmsService, err := bluetooth.ParseUUID(ftmsUUID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	ftmsControlPoint, err := bluetooth.ParseUUID(fitnessMachineControlPointUUID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	cyclingPowerService, err := bluetooth.ParseUUID(cyclingPower)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	serviceUuid, err := bluetooth.ParseUUID(cyclingPowerMeasureMent)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	continueScanning := func(s string) {
@@ -136,18 +136,21 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 				continue
 			}
 
-			dservices, err := device.DiscoverServices([]bluetooth.UUID{cyclingPowerService})
+			dservices, err := device.DiscoverServices(
+				[]bluetooth.UUID{cyclingPowerService, ftmsService},
+			)
 			if err != nil {
 				continueScanning("Device does not have cycling power enabled")
 				continue
 			}
 
-			hasCyclingPower := len(dservices) == 1
-			if !hasCyclingPower {
-				continueScanning("Device does not have cycling power enabled")
+			hasCyclingPowerAndFTMS := len(dservices) == 2
+			if !hasCyclingPowerAndFTMS {
+				continueScanning("Device does not have all required services")
 				continue
 			}
 
+			// let's assume the services get fetched in order
 			service := dservices[0]
 
 			chars, err := service.DiscoverCharacteristics([]bluetooth.UUID{serviceUuid})
@@ -162,18 +165,8 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 				continue
 			}
 
-			ftmsServices, err := device.DiscoverServices([]bluetooth.UUID{ftmsService})
-			if err != nil {
-				continueScanning("Could not find ftms service")
-			}
-
-			hasFtms := len(ftmsServices) == 1
-			if !hasFtms {
-				continueScanning("Could not find ftms service")
-			}
-
-			ftms := ftmsServices[0]
-			fmtsControlPointChar, err := ftms.DiscoverCharacteristics(
+			ftms := dservices[1]
+			ftmsControlPointChar, err := ftms.DiscoverCharacteristics(
 				[]bluetooth.UUID{ftmsControlPoint},
 			)
 			if err != nil {
@@ -181,7 +174,7 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 			}
 
 			devChar <- &(chars[0])
-			ftmsCP <- &(fmtsControlPointChar[0])
+			ftmsCP <- &(ftmsControlPointChar[0])
 		}
 	}()
 
@@ -196,10 +189,11 @@ func DiscoverFTMSDevice() (*bluetooth.DeviceCharacteristic, error) {
 	scan <- true
 
 	char := <-devChar
+	ftmsCPChar := <-ftmsCP
 	slog.Info("Scanning done...")
 	if char == nil {
-		return nil, fmt.Errorf("Supported device not found")
+		return nil, nil, fmt.Errorf("Supported device not found")
 	}
 
-	return char, nil
+	return char, ftmsCPChar, nil
 }
