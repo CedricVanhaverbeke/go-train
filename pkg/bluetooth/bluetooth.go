@@ -3,7 +3,6 @@ package bluetooth
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"time"
 
@@ -12,38 +11,55 @@ import (
 
 var adapter = bluetooth.DefaultAdapter
 
-func Scan() error {
+type powerCharacteristic struct {
+	readPwr  *bluetooth.DeviceCharacteristic
+	writePwr *bluetooth.DeviceCharacteristic
+}
+
+// ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
+func (p powerCharacteristic) ContinuousRead(c chan int) error {
+	err := p.readPwr.EnableNotifications(func(buf []byte) {
+		power := int16(buf[2]) | int16(buf[3])<<8
+		c <- int(power)
+	})
+
+	return err
+}
+
+func (p powerCharacteristic) Write(b []byte) (int, error) {
+	// actually write to characteristic here
+	return 0, nil
+}
+
+func Connect() (*Trainer, error) {
 	err := adapter.Enable()
 	if err != nil {
 		panic(err)
 	}
 
 	slog.Info("Finding trainer...")
-	char, ftmsChar, err := discover()
-	fmt.Println(ftmsChar)
+	readPowerChar, writePowerChar, err := discoverPowerDevice()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = char.EnableNotifications(func(buf []byte) {
-		// Extract instantaneous power (signed 16-bit integer, little-endian)
-		power := int16(buf[2]) | int16(buf[3])<<8
-		log.Printf("Instantaneous Power: %d watts", power)
-	})
-
-	if err != nil {
-		return err
+	powerChar := powerCharacteristic{
+		readPwr:  readPowerChar,
+		writePwr: writePowerChar,
 	}
 
-	return nil
+	trainer := NewTrainer(powerChar)
+	return &trainer, nil
 }
 
-// discover checks every available device
+// discoverPowerDevice checks every available device
 // having the FTMS service and cyling power service.
-// it returns two channels. It returns two bluetooth characteristics.
+//
+//	It returns two bluetooth characteristics.
+//
 // the first char can be used to get power notifications and
 // the second char can be used to set power on the device
-func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
+func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	found := make(chan bluetooth.ScanResult)
 	devChar := make(chan *bluetooth.DeviceCharacteristic)
 	ftmsCP := make(chan *bluetooth.DeviceCharacteristic)

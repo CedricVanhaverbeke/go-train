@@ -5,12 +5,12 @@ import (
 	"overlay/game/sprites"
 	"overlay/game/state"
 	"overlay/internal/training"
-	"overlay/pkg/consumer"
-	"overlay/pkg/producer"
+	"overlay/pkg/bluetooth"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kbinani/screenshot"
+	"golang.org/x/exp/slog"
 )
 
 type game struct {
@@ -20,8 +20,8 @@ type game struct {
 	start   time.Time
 	timer   time.Time
 
-	cM    consumer.Metrics
-	State state.GameState
+	trainer *bluetooth.Trainer
+	State   state.GameState
 }
 
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -34,7 +34,13 @@ func (g *game) Update() error {
 		g.State.Progress.Tick()
 
 		// push the power
-		g.cM.Power <- training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
+		_, err := g.trainer.WritePower(
+			training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration()),
+		)
+
+		if err != nil {
+			slog.Error("could not write power: ", err)
+		}
 
 		for _, s := range g.sprites {
 			s.Update(g.State)
@@ -57,7 +63,7 @@ func getCurrentMonitorSize() (int, int) {
 	return width, height
 }
 
-func newGame(training training.Training, cM consumer.Metrics) *game {
+func newGame(training training.Training, trainer *bluetooth.Trainer) *game {
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
@@ -75,28 +81,28 @@ func newGame(training training.Training, cM consumer.Metrics) *game {
 			Progress: state.NewProgress(),
 			Training: training,
 		},
-		cM: cM,
+		trainer: trainer,
 	}
 
 	return game
 }
 
-func (g *game) subscribe(metrics producer.Metrics) {
-	go func() {
-		for p := range metrics.Power {
-			g.State.Metrics.Power = p
-		}
-	}()
+func (g *game) subscribe(tr *bluetooth.Trainer) {
+	powerChan := make(chan int)
+	err := tr.ReadPower(powerChan)
+	if err != nil {
+		slog.Error("Could not read power")
+	}
 
 	go func() {
-		for hr := range metrics.Hr {
-			g.State.Metrics.Hr = hr
+		for p := range powerChan {
+			g.State.Metrics.Power = p
 		}
 	}()
 }
 
-func Run(training training.Training, metrics producer.Metrics, cM consumer.Metrics) {
-	game := newGame(training, cM)
+func Run(training training.Training, trainer *bluetooth.Trainer) {
+	game := newGame(training, trainer)
 
 	ebiten.SetWindowDecorated(false)
 	ebiten.SetWindowFloating(true)
@@ -107,7 +113,7 @@ func Run(training training.Training, metrics producer.Metrics, cM consumer.Metri
 	op.ScreenTransparent = true
 	op.SkipTaskbar = true
 
-	game.subscribe(metrics)
+	game.subscribe(trainer)
 
 	if err := ebiten.RunGameWithOptions(game, op); err != nil {
 		log.Fatal(err)
