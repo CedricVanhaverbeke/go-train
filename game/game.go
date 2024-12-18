@@ -29,17 +29,24 @@ func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 func (g *game) Update() error {
 	now := time.Now()
-	if now.Sub(g.timer) > time.Second {
+	prevTimer := g.timer
+	prevPower := training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
+
+	if now.Sub(prevTimer) > time.Second {
 		g.timer = now
 		g.State.Progress.Tick()
 
-		// push the power
-		_, err := g.trainer.WritePower(
-			training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration()),
-		)
+		newPower := training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
 
-		if err != nil {
-			slog.Error("could not write power: ", err)
+		// check if we changed the power or the game just started
+		if prevPower != newPower || g.State.Progress.Duration() == 1*time.Second {
+			_, err := g.trainer.WritePower(
+				newPower,
+			)
+
+			if err != nil {
+				slog.Error("could not write power: ", err)
+			}
 		}
 
 		for _, s := range g.sprites {

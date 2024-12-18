@@ -26,9 +26,22 @@ func (p powerCharacteristic) ContinuousRead(c chan int) error {
 	return err
 }
 
-func (p powerCharacteristic) Write(b []byte) (int, error) {
-	// actually write to characteristic here
-	return 0, nil
+func (p powerCharacteristic) Write(power int) (int, error) {
+	// i need to set the power in little endian
+	data := []byte{0x05, 0, 0}
+	i := 1
+
+	// bitshift it to the right the
+	if power > 256 {
+		i++
+		data[1] = 255
+		power -= 255
+	}
+
+	data[i] = byte(power)
+	fmt.Printf("%b\n", data)
+
+	return p.writePwr.WriteWithoutResponse(data)
 }
 
 func Connect() (*Trainer, error) {
@@ -41,6 +54,14 @@ func Connect() (*Trainer, error) {
 	readPowerChar, writePowerChar, err := discoverPowerDevice()
 	if err != nil {
 		return nil, err
+	}
+
+	err = writePowerChar.EnableNotifications(func(buf []byte) {
+		println("Notification received:", buf)
+	})
+
+	if err != nil {
+		slog.Error(err.Error())
 	}
 
 	powerChar := powerCharacteristic{
