@@ -26,6 +26,14 @@ func (p powerCharacteristic) ContinuousRead(c chan int) error {
 	return err
 }
 
+// for writing power I first need to get permission to do so
+// see page 55 of this: file:///Users/cedricvanhaverbeke/Downloads/FTMS_v1.0.1.pdf
+
+// This procedure requires control permission in order to be executed. Refer to Section 4.16.2.1 for more
+// information on the Request Control procedure.
+// When the Set Target Power Op Code is written to the Fitness Machine Control Point and the Result Code
+// is ‘Success’, the Server shall set the target power to the value sent as a Parameter.
+// see page 74 to see how the interaction works
 func (p powerCharacteristic) Write(power int) (int, error) {
 	// i need to set the power in little endian
 	data := []byte{0x05, 0, 0}
@@ -41,7 +49,15 @@ func (p powerCharacteristic) Write(power int) (int, error) {
 	data[i] = byte(power)
 	fmt.Printf("%b\n", data)
 
-	return p.writePwr.WriteWithoutResponse(data)
+	return p.writePwr.Write(data)
+}
+
+// requestControl initiates the procedure
+// to request control over the fitness machine
+func (p powerCharacteristic) requestControl() error {
+	data := []byte{0x00}
+	_, err := p.writePwr.Write(data)
+	return err
 }
 
 func Connect() (*Trainer, error) {
@@ -67,6 +83,11 @@ func Connect() (*Trainer, error) {
 	powerChar := powerCharacteristic{
 		readPwr:  readPowerChar,
 		writePwr: writePowerChar,
+	}
+
+	err = powerChar.requestControl()
+	if err != nil {
+		slog.Error(err.Error())
 	}
 
 	trainer := NewTrainer(powerChar)
