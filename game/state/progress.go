@@ -3,7 +3,8 @@ package state
 import "time"
 
 type Progress struct {
-	t time.Duration
+	t       time.Duration
+	Started bool
 }
 
 func NewProgress() Progress {
