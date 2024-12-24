@@ -21,27 +21,29 @@ type metadata struct {
 	Time string `xml:"time"`
 }
 
+type trkpt struct {
+	Text       string `xml:",chardata"`
+	Lat        string `xml:"lat,attr"`
+	Lon        string `xml:"lon,attr"`
+	Ele        string `xml:"ele"`
+	Time       string `xml:"time"`
+	Extensions struct {
+		Text                string `xml:",chardata"`
+		Power               string `xml:"power"`
+		TrackPointExtension struct {
+			Text string `xml:",chardata"`
+			Cad  string `xml:"cad"`
+		} `xml:"TrackPointExtension"`
+	} `xml:"extensions"`
+}
+
 type trk struct {
 	Text   string `xml:",chardata"`
 	Name   string `xml:"name"`
 	Type   string `xml:"type"`
 	Trkseg struct {
-		Text  string `xml:",chardata"`
-		Trkpt []struct {
-			Text       string `xml:",chardata"`
-			Lat        string `xml:"lat,attr"`
-			Lon        string `xml:"lon,attr"`
-			Ele        string `xml:"ele"`
-			Time       string `xml:"time"`
-			Extensions struct {
-				Text                string `xml:",chardata"`
-				Power               string `xml:"power"`
-				TrackPointExtension struct {
-					Text string `xml:",chardata"`
-					Cad  string `xml:"cad"`
-				} `xml:"TrackPointExtension"`
-			} `xml:"extensions"`
-		} `xml:"trkpt"`
+		Text  string  `xml:",chardata"`
+		Trkpt []trkpt `xml:"trkpt"`
 	} `xml:"trkseg"`
 }
 
@@ -70,8 +72,6 @@ func NewGpx(name string) Gpx {
 		Trk: trk{
 			Name: name,
 			Type: VIRTUAL_RIDE,
-
-			// todo: add trk seg
 		},
 	}
 }
