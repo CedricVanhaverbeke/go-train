@@ -28,6 +28,10 @@ func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return g.width, g.height
 }
 func (g *game) Update() error {
+	if !g.State.Progress.Started {
+		return nil
+	}
+
 	now := time.Now()
 	prevTimer := g.timer
 	prevPower := training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
@@ -103,6 +107,10 @@ func (g *game) subscribe(tr *bluetooth.Trainer) {
 
 	go func() {
 		for p := range powerChan {
+			// only start when first power comes in
+			if p > 0 {
+				g.State.Progress.Started = true
+			}
 			g.State.Metrics.Power = p
 		}
 	}()
