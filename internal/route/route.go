@@ -267,11 +267,14 @@ var helloWorldRoute = `{
 }
 `
 
+// A route follows a geojson predefined route
+// But it contains also other things as well,
+// such as speed on a point, power on a point
+// and so on
 type Route struct {
 	Geojson geojson.GeoJson `json:"geojson"`
 }
 
-// New loads the helloworld route for now
 func New() Route {
 	var g geojson.GeoJson
 	err := json.NewDecoder(strings.NewReader(helloWorldRoute)).Decode(&g)
