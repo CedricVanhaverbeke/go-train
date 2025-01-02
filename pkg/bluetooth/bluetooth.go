@@ -11,55 +11,6 @@ import (
 
 var adapter = bluetooth.DefaultAdapter
 
-type powerCharacteristic struct {
-	readPwr  *bluetooth.DeviceCharacteristic
-	writePwr *bluetooth.DeviceCharacteristic
-}
-
-// ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
-func (p powerCharacteristic) ContinuousRead(c chan int) error {
-	err := p.readPwr.EnableNotifications(func(buf []byte) {
-		power := int16(buf[2]) | int16(buf[3])<<8
-		c <- int(power)
-	})
-
-	return err
-}
-
-// for writing power I first need to get permission to do so
-// see page 55 of this: file:///Users/cedricvanhaverbeke/Downloads/FTMS_v1.0.1.pdf
-
-// This procedure requires control permission in order to be executed. Refer to Section 4.16.2.1 for more
-// information on the Request Control procedure.
-// When the Set Target Power Op Code is written to the Fitness Machine Control Point and the Result Code
-// is ‘Success’, the Server shall set the target power to the value sent as a Parameter.
-// see page 74 to see how the interaction works
-func (p powerCharacteristic) Write(power int) (int, error) {
-	// i need to set the power in little endian
-	data := []byte{0x05, 0, 0}
-	i := 1
-
-	// bitshift it to the right the
-	if power > 256 {
-		i++
-		data[1] = 255
-		power -= 255
-	}
-
-	data[i] = byte(power)
-	fmt.Printf("%b\n", data)
-
-	return p.writePwr.Write(data)
-}
-
-// requestControl initiates the procedure
-// to request control over the fitness machine
-func (p powerCharacteristic) requestControl() error {
-	data := []byte{0x00}
-	_, err := p.writePwr.Write(data)
-	return err
-}
-
 func Connect() (*Trainer, error) {
 	err := adapter.Enable()
 	if err != nil {
@@ -67,7 +18,7 @@ func Connect() (*Trainer, error) {
 	}
 
 	slog.Info("Finding trainer...")
-	readPowerChar, writePowerChar, err := discoverPowerDevice()
+	readPowerChar, writePowerChar, err := discover()
 	if err != nil {
 		return nil, err
 	}
@@ -90,21 +41,21 @@ func Connect() (*Trainer, error) {
 		slog.Error(err.Error())
 	}
 
-	trainer := NewTrainer(powerChar)
+	trainer := NewTrainer(WithPower(powerChar))
 	return &trainer, nil
 }
 
-// discoverPowerDevice checks every available device
+// discover checks every available device
 // having the FTMS service and cyling power service.
 //
 //	It returns two bluetooth characteristics.
 //
 // the first char can be used to get power notifications and
 // the second char can be used to set power on the device
-func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
+func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	found := make(chan bluetooth.ScanResult)
-	devChar := make(chan *bluetooth.DeviceCharacteristic)
-	ftmsCP := make(chan *bluetooth.DeviceCharacteristic)
+	powChar := make(chan *bluetooth.DeviceCharacteristic)
+	ftmsChar := make(chan *bluetooth.DeviceCharacteristic)
 	scan := make(chan bool)
 
 	scanned := map[string]bool{}
@@ -139,7 +90,7 @@ func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCh
 					found <- device
 				case <-ctx.Done():
 					slog.Info("bluetooth scanning timeout exceeded")
-					devChar <- nil
+					powChar <- nil
 					return
 				}
 			})
@@ -166,7 +117,7 @@ func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCh
 			}
 
 			dservices, err := device.DiscoverServices(
-				[]bluetooth.UUID{cyclingPowerService, ftmsService},
+				[]bluetooth.UUID{powServiceUuid, ftmsServiceUuid},
 			)
 			if err != nil {
 				continueScanning("Device does not have cycling power enabled")
@@ -182,7 +133,9 @@ func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCh
 			// let's assume the services get fetched in order
 			service := dservices[0]
 
-			chars, err := service.DiscoverCharacteristics([]bluetooth.UUID{serviceUuid})
+			chars, err := service.DiscoverCharacteristics(
+				[]bluetooth.UUID{cyclingPowerCharacteristicUuid},
+			)
 			if err != nil {
 				continueScanning("Could not get characteristics " + err.Error())
 				continue
@@ -194,16 +147,16 @@ func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCh
 				continue
 			}
 
-			ftms := dservices[1]
-			ftmsControlPointChar, err := ftms.DiscoverCharacteristics(
-				[]bluetooth.UUID{ftmsControlPoint},
+			_ftms := dservices[1]
+			ftmsControlPointChar, err := _ftms.DiscoverCharacteristics(
+				[]bluetooth.UUID{FTMSCharUuid},
 			)
 			if err != nil {
 				continueScanning("Could not scan all characteristics of ftms service")
 			}
 
-			devChar <- &(chars[0])
-			ftmsCP <- &(ftmsControlPointChar[0])
+			powChar <- &(chars[0])
+			ftmsChar <- &(ftmsControlPointChar[0])
 		}
 	}()
 
@@ -217,8 +170,8 @@ func discoverPowerDevice() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCh
 	// start scanning
 	scan <- true
 
-	char := <-devChar
-	ftmsCPChar := <-ftmsCP
+	char := <-powChar
+	ftmsCPChar := <-ftmsChar
 	slog.Info("Scanning done...")
 	if char == nil {
 		return nil, nil, fmt.Errorf("Supported device not found")

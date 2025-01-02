@@ -6,19 +6,32 @@ type readwriter interface {
 }
 
 type Trainer struct {
-	characteristics []readwriter
+	Power   readwriter
+	Speed   readwriter
+	Cadence readwriter
 }
 
 func (t Trainer) ReadPower(c chan int) error {
-	return t.characteristics[0].ContinuousRead(c)
+	return t.Power.ContinuousRead(c)
 }
 
 func (t Trainer) WritePower(power int) (int, error) {
-	return t.characteristics[0].Write(power)
+	return t.Power.Write(power)
 }
 
-func NewTrainer(chars ...readwriter) Trainer {
-	return Trainer{
-		characteristics: chars,
+type trainerOpt func(*Trainer)
+
+func WithPower(pow readwriter) trainerOpt {
+	return func(t *Trainer) {
+		t.Power = pow
 	}
+}
+
+func NewTrainer(opts ...trainerOpt) Trainer {
+	t := &Trainer{}
+	for _, opt := range opts {
+		opt(t)
+	}
+
+	return *t
 }
