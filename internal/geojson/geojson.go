@@ -48,7 +48,7 @@ func (g *GeoJson) Add(lon, lat, elevation float64) {
 // with a given start and end index
 //
 // it uses the Haversine formula
-func (g *GeoJson) distance(i int, j int) float64 {
+func (g *GeoJson) distance(x int, y int) float64 {
 	if g.Features == nil {
 		return 0.0
 	}
@@ -57,19 +57,18 @@ func (g *GeoJson) distance(i int, j int) float64 {
 		return 0.0
 	}
 
-	if len(g.Features[0].Geometry.Coordinates) < i ||
-		len(g.Features[0].Geometry.Coordinates) < j {
+	if len(g.Features[0].Geometry.Coordinates) < x ||
+		len(g.Features[0].Geometry.Coordinates) < y {
 		return 0.0
-
 	}
 
-	return haversine(
-		g.Features[0].Geometry.Coordinates[i][0],
-		g.Features[0].Geometry.Coordinates[i][1],
-		g.Features[0].Geometry.Coordinates[j][0],
-		g.Features[0].Geometry.Coordinates[j][1],
-	)
-
+	var d float64
+	for i := x; i < y-1; i++ {
+		c1 := g.Features[0].Geometry.Coordinates[i]
+		c2 := g.Features[0].Geometry.Coordinates[i+1]
+		d += haversine(c1[0], c1[1], c2[0], c2[1])
+	}
+	return d
 }
 
 var EARTH_RADIUS = 6371e3
