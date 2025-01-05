@@ -4,6 +4,7 @@ import (
 	"log"
 	"overlay/game/sprites"
 	"overlay/game/state"
+	"overlay/internal/route"
 	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
 	"time"
@@ -44,7 +45,7 @@ func (g *game) Update() error {
 
 		// check if we changed the power or the game just started
 		if prevPower != newPower || g.State.Progress.Duration() == 1*time.Second {
-			_, err := g.trainer.WritePower(
+			_, err := g.trainer.Power.Write(
 				newPower,
 			)
 
@@ -99,24 +100,12 @@ func newGame(training training.Training, trainer *bluetooth.Trainer) *game {
 }
 
 func (g *game) subscribe(tr *bluetooth.Trainer) {
-	powerChan := make(chan int)
-	err := tr.ReadPower(powerChan)
-	if err != nil {
-		slog.Error("Could not read power")
-	}
-
-	go func() {
-		for p := range powerChan {
-			// only start when first power comes in
-			if p > 0 {
-				g.State.Progress.Started = true
-			}
-			g.State.Metrics.Power = p
-		}
-	}()
+	g.subscribePwr(tr)
+	g.subscribeSpeed(tr)
+	g.subscribeCadence(tr)
 }
 
-func Run(training training.Training, trainer *bluetooth.Trainer) {
+func Run(training training.Training, trainer *bluetooth.Trainer, route route.Route) {
 	game := newGame(training, trainer)
 
 	ebiten.SetWindowDecorated(false)

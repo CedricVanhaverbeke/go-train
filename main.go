@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"overlay/game"
+	"overlay/internal/route"
 	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
 )
@@ -27,5 +28,6 @@ func main() {
 	}
 
 	training := training.NewRandom()
-	game.Run(training, trainer)
+	helloWorldRoute := route.New()
+	game.Run(training, trainer, helloWorldRoute)
 }

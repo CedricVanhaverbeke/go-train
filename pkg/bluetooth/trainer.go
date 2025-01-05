@@ -11,19 +11,23 @@ type Trainer struct {
 	Cadence readwriter
 }
 
-func (t Trainer) ReadPower(c chan int) error {
-	return t.Power.ContinuousRead(c)
-}
-
-func (t Trainer) WritePower(power int) (int, error) {
-	return t.Power.Write(power)
-}
-
 type trainerOpt func(*Trainer)
 
 func WithPower(pow readwriter) trainerOpt {
 	return func(t *Trainer) {
 		t.Power = pow
+	}
+}
+
+func WithSpeed(v readwriter) trainerOpt {
+	return func(t *Trainer) {
+		t.Speed = v
+	}
+}
+
+func WithCadence(cad readwriter) trainerOpt {
+	return func(t *Trainer) {
+		t.Cadence = cad
 	}
 }
 
