@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 	"overlay/pkg/bluetooth"
 )
@@ -34,7 +35,7 @@ func (g *game) subscribeSpeed(tr *bluetooth.Trainer) {
 	}
 
 	speedChan := make(chan int)
-	err := tr.Power.ContinuousRead(speedChan)
+	err := tr.Speed.ContinuousRead(speedChan)
 	if err != nil {
 		slog.Error("Could not read speed")
 	}
@@ -45,6 +46,7 @@ func (g *game) subscribeSpeed(tr *bluetooth.Trainer) {
 			if p > 0 {
 				g.State.Progress.Started = true
 			}
+			slog.Info(fmt.Sprintf("Got speed: %d", p))
 			g.State.Metrics.Speed = p
 		}
 	}()
