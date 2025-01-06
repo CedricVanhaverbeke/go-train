@@ -40,9 +40,6 @@ func main() {
 		}
 	}()
 
-	// TODO: keep the game and the gpx file writer
-	// seperate. So I need to read multiple times
-	// from the same channel
 	trainer.Listen()
 	game.Run(training, trainer, helloWorldRoute)
 }
