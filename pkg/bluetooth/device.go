@@ -42,6 +42,15 @@ func NewDevice(opts ...trainerOpt) Device {
 }
 
 func (d *Device) Listen() {
-	d.Power.ContinuousRead()
+	if d.Power != nil {
+		_ = d.Power.ContinuousRead()
+	}
 
+	if d.Cadence != nil {
+		_ = d.Cadence.ContinuousRead()
+	}
+	if d.Speed != nil {
+
+		_ = d.Speed.ContinuousRead()
+	}
 }

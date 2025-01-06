@@ -16,10 +16,6 @@ func (g *game) subscribePwr(tr *bluetooth.Device) {
 
 	powerChan := make(chan int)
 	tr.Power.AddListener(powerChan)
-	err := tr.Power.ContinuousRead()
-	if err != nil {
-		slog.Error("Could not read power")
-	}
 
 	go func() {
 		for p := range powerChan {
@@ -39,11 +35,7 @@ func (g *game) subscribeSpeed(tr *bluetooth.Device) {
 	}
 
 	speedChan := make(chan int)
-	err := tr.Speed.ContinuousRead()
-	if err != nil {
-		slog.Error("Could not read speed")
-	}
-
+	g.trainer.Speed.AddListener(speedChan)
 	go func() {
 		for p := range speedChan {
 			// only start when first power comes in
@@ -63,11 +55,7 @@ func (g *game) subscribeCadence(tr *bluetooth.Device) {
 	}
 
 	cadChan := make(chan int)
-	err := tr.Power.ContinuousRead()
-	if err != nil {
-		slog.Error("Could not read cadence")
-	}
-
+	g.trainer.Cadence.AddListener(cadChan)
 	go func() {
 		for p := range cadChan {
 			// only start when first power comes in
