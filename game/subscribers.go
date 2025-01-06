@@ -14,12 +14,9 @@ func (g *game) subscribePwr(tr *bluetooth.Device) {
 		return
 	}
 
-	// this code can live inside another package
-	// let's say the metrics package
-	// the metrics package exposes the channels from where
-	// a game can be read
 	powerChan := make(chan int)
-	err := tr.Power.ContinuousRead(powerChan)
+	tr.Power.AddListener(powerChan)
+	err := tr.Power.ContinuousRead()
 	if err != nil {
 		slog.Error("Could not read power")
 	}
@@ -42,7 +39,7 @@ func (g *game) subscribeSpeed(tr *bluetooth.Device) {
 	}
 
 	speedChan := make(chan int)
-	err := tr.Speed.ContinuousRead(speedChan)
+	err := tr.Speed.ContinuousRead()
 	if err != nil {
 		slog.Error("Could not read speed")
 	}
@@ -66,7 +63,7 @@ func (g *game) subscribeCadence(tr *bluetooth.Device) {
 	}
 
 	cadChan := make(chan int)
-	err := tr.Power.ContinuousRead(cadChan)
+	err := tr.Power.ContinuousRead()
 	if err != nil {
 		slog.Error("Could not read cadence")
 	}
