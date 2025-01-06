@@ -31,7 +31,7 @@ func WithCadence(cad readwriter) trainerOpt {
 	}
 }
 
-func NewTrainer(opts ...trainerOpt) Device {
+func NewDevice(opts ...trainerOpt) Device {
 	t := &Device{}
 	for _, opt := range opts {
 		opt(t)
