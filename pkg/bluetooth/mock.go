@@ -44,8 +44,8 @@ func (p speedPowerChar) Write(speed int) (int, error) {
 	return 0, nil
 }
 
-func NewRandTrainer() Trainer {
-	return NewTrainer(
+func NewMockDevice() Device {
+	return NewDevice(
 		WithPower(mockPowerChar{}),
 		WithSpeed(speedPowerChar{}),
 	)

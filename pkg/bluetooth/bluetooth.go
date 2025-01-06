@@ -11,7 +11,7 @@ import (
 
 var adapter = bluetooth.DefaultAdapter
 
-func Connect() (*Trainer, error) {
+func Connect() (*Device, error) {
 	err := adapter.Enable()
 	if err != nil {
 		panic(err)

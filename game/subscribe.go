@@ -6,11 +6,18 @@ import (
 	"overlay/pkg/bluetooth"
 )
 
-func (g *game) subscribePwr(tr *bluetooth.Trainer) {
+// TODO: this stuff should not be inside the game.
+// the game should only get the channels itself,
+// not a bluetooth trainer directly
+func (g *game) subscribePwr(tr *bluetooth.Device) {
 	if tr.Power == nil {
 		return
 	}
 
+	// this code can live inside another package
+	// let's say the metrics package
+	// the metrics package exposes the channels from where
+	// a game can be read
 	powerChan := make(chan int)
 	err := tr.Power.ContinuousRead(powerChan)
 	if err != nil {
@@ -28,7 +35,7 @@ func (g *game) subscribePwr(tr *bluetooth.Trainer) {
 	}()
 }
 
-func (g *game) subscribeSpeed(tr *bluetooth.Trainer) {
+func (g *game) subscribeSpeed(tr *bluetooth.Device) {
 	if tr.Speed == nil {
 		slog.Info("Speed characteristic is nil on device")
 		return
@@ -52,7 +59,7 @@ func (g *game) subscribeSpeed(tr *bluetooth.Trainer) {
 	}()
 }
 
-func (g *game) subscribeCadence(tr *bluetooth.Trainer) {
+func (g *game) subscribeCadence(tr *bluetooth.Device) {
 	if tr.Cadence == nil {
 		slog.Info("Cadence characteristic is nil on device")
 		return

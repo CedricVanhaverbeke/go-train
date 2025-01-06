@@ -21,7 +21,7 @@ type game struct {
 	start   time.Time
 	timer   time.Time
 
-	trainer *bluetooth.Trainer
+	trainer *bluetooth.Device
 	State   state.GameState
 }
 
@@ -75,7 +75,7 @@ func getCurrentMonitorSize() (int, int) {
 	return width, height
 }
 
-func newGame(training training.Training, trainer *bluetooth.Trainer) *game {
+func newGame(training training.Training, trainer *bluetooth.Device) *game {
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
@@ -99,13 +99,13 @@ func newGame(training training.Training, trainer *bluetooth.Trainer) *game {
 	return game
 }
 
-func (g *game) subscribe(tr *bluetooth.Trainer) {
+func (g *game) subscribe(tr *bluetooth.Device) {
 	g.subscribePwr(tr)
 	g.subscribeSpeed(tr)
 	g.subscribeCadence(tr)
 }
 
-func Run(training training.Training, trainer *bluetooth.Trainer, route route.Route) {
+func Run(training training.Training, trainer *bluetooth.Device, route route.Route) {
 	game := newGame(training, trainer)
 
 	ebiten.SetWindowDecorated(false)
