@@ -2,7 +2,8 @@ package bluetooth
 
 type readwriter interface {
 	Write(int) (int, error)
-	ContinuousRead(chan int) error
+	ContinuousRead() error
+	AddListener(chan int)
 }
 
 type Device struct {
@@ -38,4 +39,9 @@ func NewDevice(opts ...trainerOpt) Device {
 	}
 
 	return *t
+}
+
+func (d *Device) Listen() {
+	d.Power.ContinuousRead()
+
 }

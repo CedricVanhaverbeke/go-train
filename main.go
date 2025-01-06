@@ -12,7 +12,7 @@ var mock = flag.Bool("m", false, "Sets up a mock trainer instead of connecting t
 
 func newDevice() (*bluetooth.Device, error) {
 	if *mock {
-		trainer := bluetooth.NewRandTrainer()
+		trainer := bluetooth.NewMockDevice()
 		return &trainer, nil
 	}
 
@@ -22,7 +22,7 @@ func newDevice() (*bluetooth.Device, error) {
 func main() {
 	flag.Parse()
 
-	dev, err := newDevice()
+	trainer, err := newDevice()
 	if err != nil {
 		panic(err)
 	}
@@ -33,5 +33,5 @@ func main() {
 	// TODO: keep the game and the gpx file writer
 	// seperate. So I need to read multiple times
 	// from the same channel
-	game.Run(training, dev, helloWorldRoute)
+	game.Run(training, trainer, helloWorldRoute)
 }

@@ -41,7 +41,7 @@ func Connect() (*Device, error) {
 		slog.Error(err.Error())
 	}
 
-	trainer := NewTrainer(WithPower(powerChar))
+	trainer := NewDevice(WithPower(&powerChar))
 	return &trainer, nil
 }
 
