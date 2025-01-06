@@ -8,20 +8,18 @@ import (
 )
 
 type mockPowerChar struct {
-	listeners []chan int
+	listeners
 }
 type speedPowerChar struct {
-	listeners []chan int
+	listeners
 }
 
 // ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
 func (p *mockPowerChar) ContinuousRead() error {
 	go func() {
 		for {
-			for _, listener := range p.listeners {
-				listener <- rand.Intn(200) + 100
-
-			}
+			p.listeners.WriteValue(rand.Intn(200) + 100)
+			time.Sleep(2 * time.Second)
 		}
 	}()
 
@@ -33,29 +31,10 @@ func (p *mockPowerChar) Write(power int) (int, error) {
 	return 0, nil
 }
 
-func (p *speedPowerChar) AddListener(c chan int) {
-	if p.listeners == nil {
-		p.listeners = make([]chan int, 0)
-	}
-
-	p.listeners = append(p.listeners, c)
-}
-
-func (p *mockPowerChar) AddListener(c chan int) {
-	if p.listeners == nil {
-		p.listeners = make([]chan int, 0)
-	}
-
-	p.listeners = append(p.listeners, c)
-}
-
 func (p *speedPowerChar) ContinuousRead() error {
 	go func() {
 		for {
-			for _, listener := range p.listeners {
-				listener <- rand.Intn(4) + 28
-
-			}
+			p.listeners.WriteValue(rand.Intn(4) + 28)
 			time.Sleep(2 * time.Second)
 		}
 	}()

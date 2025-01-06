@@ -6,28 +6,36 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
+type listeners struct {
+	listeners []chan int
+}
+
+func (l *listeners) AddListener(c chan int) {
+	if l.listeners == nil {
+		l.listeners = make([]chan int, 0)
+	}
+
+	l.listeners = append(l.listeners, c)
+}
+
+func (l *listeners) WriteValue(v int) {
+	for _, listener := range l.listeners {
+		listener <- int(v)
+	}
+}
+
 type powerCharacteristic struct {
 	readPwr  *bluetooth.DeviceCharacteristic
 	writePwr *bluetooth.DeviceCharacteristic
 
-	listeners []chan int
-}
-
-func (p *powerCharacteristic) AddListener(c chan int) {
-	if p.listeners == nil {
-		p.listeners = make([]chan int, 0)
-	}
-
-	p.listeners = append(p.listeners, c)
+	listeners
 }
 
 // ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
 func (p *powerCharacteristic) ContinuousRead() error {
 	err := p.readPwr.EnableNotifications(func(buf []byte) {
 		power := int16(buf[2]) | int16(buf[3])<<8
-		for _, listener := range p.listeners {
-			listener <- int(power)
-		}
+		p.listeners.WriteValue(int(power))
 	})
 
 	return err
