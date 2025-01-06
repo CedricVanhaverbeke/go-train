@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
@@ -30,8 +31,18 @@ func main() {
 	training := training.NewRandom()
 	helloWorldRoute := route.New()
 
+	fileChan := make(chan int)
+	trainer.Power.AddListener(fileChan)
+
+	go func() {
+		for p := range fileChan {
+			fmt.Println(p)
+		}
+	}()
+
 	// TODO: keep the game and the gpx file writer
 	// seperate. So I need to read multiple times
 	// from the same channel
+	trainer.Listen()
 	game.Run(training, trainer, helloWorldRoute)
 }

@@ -50,7 +50,6 @@ func (d *Device) Listen() {
 		_ = d.Cadence.ContinuousRead()
 	}
 	if d.Speed != nil {
-
 		_ = d.Speed.ContinuousRead()
 	}
 }

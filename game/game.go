@@ -120,9 +120,6 @@ func Run(training training.Training, trainer *bluetooth.Device, route route.Rout
 	// subscribe to all trainer metrics
 	game.subscribe(trainer)
 
-	// listen for all incoming metrics
-	game.trainer.Listen()
-
 	if err := ebiten.RunGameWithOptions(game, op); err != nil {
 		log.Fatal(err)
 	}
