@@ -1,6 +1,7 @@
 package bluetooth
 
 import (
+	"fmt"
 	"log/slog"
 	"math/rand"
 	"strconv"
@@ -12,6 +13,25 @@ type mockPowerChar struct {
 }
 type speedPowerChar struct {
 	listeners
+}
+
+// mock characteristic
+// that is not implemented
+
+type errorCadenceChar struct {
+	listeners
+}
+
+func (char *errorCadenceChar) AddListener(c chan int) bool {
+	return false
+}
+
+func (p *errorCadenceChar) ContinuousRead() error {
+	return fmt.Errorf("Could not read cadence")
+}
+
+func (p *errorCadenceChar) Write(power int) (int, error) {
+	return 0, fmt.Errorf("Could not write")
 }
 
 // ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
@@ -51,5 +71,6 @@ func NewMockDevice() Device {
 	return NewDevice(
 		WithPower(&mockPowerChar{}),
 		WithSpeed(&speedPowerChar{}),
+		WithCadence(&errorCadenceChar{}),
 	)
 }
