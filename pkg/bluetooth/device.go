@@ -3,7 +3,7 @@ package bluetooth
 type readwriter interface {
 	Write(int) (int, error)
 	ContinuousRead() error
-	AddListener(chan int)
+	AddListener(chan int) bool
 }
 
 type Device struct {
