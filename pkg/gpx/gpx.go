@@ -21,22 +21,6 @@ type metadata struct {
 	Time string `xml:"time"`
 }
 
-type trkpt struct {
-	Text       string `xml:",chardata"`
-	Lat        string `xml:"lat,attr"`
-	Lon        string `xml:"lon,attr"`
-	Ele        string `xml:"ele"`
-	Time       string `xml:"time"`
-	Extensions struct {
-		Text                string `xml:",chardata"`
-		Power               string `xml:"power"`
-		TrackPointExtension struct {
-			Text string `xml:",chardata"`
-			Cad  string `xml:"cad"`
-		} `xml:"TrackPointExtension"`
-	} `xml:"extensions"`
-}
-
 type trk struct {
 	Text   string `xml:",chardata"`
 	Name   string `xml:"name"`
@@ -62,7 +46,7 @@ type Gpx struct {
 	Trk            trk      `xml:"trk"`
 }
 
-func NewGpx(name string) Gpx {
+func New(name string) Gpx {
 	return Gpx{
 		Xsi: XSI,
 
@@ -74,4 +58,8 @@ func NewGpx(name string) Gpx {
 			Type: VIRTUAL_RIDE,
 		},
 	}
+}
+
+func (gpx *Gpx) AddTrackpoint(trackPoint trkpt) {
+	gpx.Trk.Trkseg.Trkpt = append(gpx.Trk.Trkseg.Trkpt, trackPoint)
 }
