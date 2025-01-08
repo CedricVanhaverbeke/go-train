@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
+	"overlay/pkg/gpx"
 )
 
 var mock = flag.Bool("m", false, "Sets up a mock trainer instead of connecting to a real trainer")
@@ -34,9 +34,14 @@ func main() {
 	fileChan := make(chan int)
 	trainer.Power.AddListener(fileChan)
 
+	gpxFile := gpx.New("Hello World Ride")
 	go func() {
 		for p := range fileChan {
-			fmt.Println(p)
+			tp := gpx.NewTrackpoint(
+				"23.3581890",
+				"54.9870280",
+				gpx.WithPower(p))
+			gpxFile.AddTrackpoint(tp)
 		}
 	}()
 
