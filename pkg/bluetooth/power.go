@@ -10,12 +10,13 @@ type listeners struct {
 	listeners []chan int
 }
 
-func (l *listeners) AddListener(c chan int) {
+func (l *listeners) AddListener(c chan int) bool {
 	if l.listeners == nil {
 		l.listeners = make([]chan int, 0)
 	}
 
 	l.listeners = append(l.listeners, c)
+	return true
 }
 
 func (l *listeners) WriteValue(v int) {
