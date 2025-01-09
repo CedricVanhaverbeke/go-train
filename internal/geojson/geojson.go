@@ -1,6 +1,9 @@
 package geojson
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type GeoJson struct {
 	Type     string    `json:"type"`
@@ -38,10 +41,9 @@ func New() GeoJson {
 	}
 }
 
-func (g *GeoJson) Add(lon, lat, elevation float64) {
-	g.Features[0].Geometry.Coordinates = append(
-		g.Features[0].Geometry.Coordinates,
-		[]float64{lon, lat, elevation})
+func (g *GeoJson) Distance() float64 {
+	return g.distance(0, len(g.Features[0].Geometry.Coordinates))
+
 }
 
 // distance returns the distance of a segment
@@ -64,6 +66,7 @@ func (g *GeoJson) distance(x int, y int) float64 {
 
 	var d float64
 	for i := x; i < y-1; i++ {
+		fmt.Println(i)
 		c1 := g.Features[0].Geometry.Coordinates[i]
 		c2 := g.Features[0].Geometry.Coordinates[i+1]
 		d += haversine(c1[0], c1[1], c2[0], c2[1])
@@ -73,7 +76,7 @@ func (g *GeoJson) distance(x int, y int) float64 {
 
 var EARTH_RADIUS = 6371e3
 
-// stolen frim here https://www.movable-type.co.uk/scripts/latlong.html
+// stolen from here https://www.movable-type.co.uk/scripts/latlong.html
 func haversine(lng1 float64, lat1 float64, lng2 float64, lat2 float64) float64 {
 	r1 := lat1 * (math.Pi / 180)
 	r2 := lat2 * (math.Pi / 180)
