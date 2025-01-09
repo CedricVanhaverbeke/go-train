@@ -30,6 +30,8 @@ func setupChannels(
 	hasSpeed := trainer.Speed.AddListener(fileSpeedChar)
 	cadence = chanAvailability{c: fileSpeedChar, available: hasSpeed}
 
+	// the values are implicitely returned but I don't like that
+	// it's just for readability when using this function
 	return power, speed, cadence
 }
 
