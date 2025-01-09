@@ -44,6 +44,8 @@ func main() {
 	}()
 
 	// use the data to run the game
+	// the game needs to run in the main thread according
+	// to the ebiten spec
 	game.Run(training, trainer, helloWorldRoute)
 
 	slog.Info("Game ended")
