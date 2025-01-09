@@ -31,7 +31,6 @@ type trk struct {
 	} `xml:"trkseg"`
 }
 
-// Gpx was generated 2024-12-24 16:45:28 by https://xml-to-go.github.io/ in Ukraine.
 type Gpx struct {
 	XMLName        xml.Name `xml:"gpx"`
 	Text           string   `xml:",chardata"`
