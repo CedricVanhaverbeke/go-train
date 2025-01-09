@@ -58,6 +58,12 @@ func (g *game) Update() error {
 			s.Update(g.State)
 		}
 	}
+
+	if g.State.Progress.Duration() >= training.Duration(g.State.Training) {
+		// return a termination error
+		return ebiten.Termination
+	}
+
 	return nil
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log/slog"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
@@ -44,4 +45,6 @@ func main() {
 
 	// use the data to run the game
 	game.Run(training, trainer, helloWorldRoute)
+
+	slog.Info("Game ended")
 }
