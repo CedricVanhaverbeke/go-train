@@ -45,6 +45,7 @@ func main() {
 	}()
 
 	fmt.Println(helloWorldRoute.Distance())
+	fmt.Println(helloWorldRoute.Slope(0, 1))
 
 	// use the data to run the game
 	// the game needs to run in the main thread according
