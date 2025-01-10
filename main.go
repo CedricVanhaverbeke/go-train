@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log/slog"
 	"overlay/game"
 	"overlay/internal/route"
@@ -42,6 +43,8 @@ func main() {
 	go func() {
 		gpxFile.Build(trainer)
 	}()
+
+	fmt.Println(helloWorldRoute.Distance())
 
 	// use the data to run the game
 	// the game needs to run in the main thread according

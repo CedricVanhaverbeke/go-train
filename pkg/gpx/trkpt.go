@@ -4,8 +4,8 @@ import "time"
 
 type trkpt struct {
 	Text       string  `xml:",chardata"`
-	Lat        string  `xml:"lat,attr"`
-	Lon        string  `xml:"lon,attr"`
+	Lat        float64 `xml:"lat,attr"`
+	Lon        float64 `xml:"lon,attr"`
 	Ele        float32 `xml:"ele"`
 	Time       string  `xml:"time"`
 	Extensions struct {

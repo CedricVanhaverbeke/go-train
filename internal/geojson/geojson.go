@@ -41,9 +41,10 @@ func New() GeoJson {
 	}
 }
 
+// Distance returns the distance of
+// a geojson file in meters
 func (g *GeoJson) Distance() float64 {
 	return g.distance(0, len(g.Features[0].Geometry.Coordinates))
-
 }
 
 // distance returns the distance of a segment
