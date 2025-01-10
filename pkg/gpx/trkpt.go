@@ -6,7 +6,7 @@ type trkpt struct {
 	Text       string  `xml:",chardata"`
 	Lat        float64 `xml:"lat,attr"`
 	Lon        float64 `xml:"lon,attr"`
-	Ele        float32 `xml:"ele"`
+	Ele        float64 `xml:"ele"`
 	Time       string  `xml:"time"`
 	Extensions struct {
 		Text  string `xml:",chardata"`
@@ -59,7 +59,7 @@ func WithHr(hr int) trkOpt {
 	}
 }
 
-func WithElevation(el float32) trkOpt {
+func WithElevation(el float64) trkOpt {
 	return func(tp *trkpt) {
 		tp.Ele = el
 	}

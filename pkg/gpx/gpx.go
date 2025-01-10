@@ -67,30 +67,60 @@ func (gpx *Gpx) AddTrackpoint(trackPoint trkpt) {
 // Distance returns the distance of
 // a geojson file in meters
 func (g *Gpx) Distance() float64 {
-	return g.distance(0, len(g.Trk.Trkseg.Trkpt))
+	return g.distance(0, len(g.Trk.Trkseg.Trkpt)-1)
 }
 
 // distance returns the distance of a segment
-// with a given start and end index
+// with a given start and end index, end index is included
 //
 // it uses the Haversine formula
-func (g *Gpx) distance(x int, y int) float64 {
+func (g *Gpx) distance(i int, j int) float64 {
 	if g.Trk.Trkseg.Trkpt == nil {
 		return 0.0
 	}
 
-	if len(g.Trk.Trkseg.Trkpt) < x ||
-		len(g.Trk.Trkseg.Trkpt) < y {
+	if len(g.Trk.Trkseg.Trkpt) < i ||
+		len(g.Trk.Trkseg.Trkpt) < j {
 		return 0.0
 	}
 
 	var d float64
-	for i := x; i < y-1; i++ {
-		c1 := g.Trk.Trkseg.Trkpt[i]
-		c2 := g.Trk.Trkseg.Trkpt[i+1]
+	for z := i; z <= j-1; z++ {
+		c1 := g.Trk.Trkseg.Trkpt[z]
+		c2 := g.Trk.Trkseg.Trkpt[z+1]
 		d += haversine(c1.Lon, c1.Lat, c2.Lon, c2.Lat)
 	}
 	return d
+}
+
+// slope returns the slope between two points of
+// the gpx. it returns it in degrees
+func (g *Gpx) Slope(i int, j int) float64 {
+	if g.Trk.Trkseg.Trkpt == nil {
+		return 0.0
+	}
+
+	if len(g.Trk.Trkseg.Trkpt) < i ||
+		len(g.Trk.Trkseg.Trkpt) < j {
+		return 0.0
+	}
+
+	var s float64
+	for z := i; z <= j-1; z++ {
+		c1 := g.Trk.Trkseg.Trkpt[z]
+		c2 := g.Trk.Trkseg.Trkpt[z+1]
+
+		el := c2.Ele - c1.Ele
+		distance := g.distance(i, j)
+
+		// make a right triangle, the slope in degrees is
+		// tan(alpha) = el / distance
+		tans := el / distance
+		curs := math.Tanh(tans)
+
+		s += curs
+	}
+	return s
 }
 
 var EARTH_RADIUS = 6371e3
