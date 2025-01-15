@@ -23,6 +23,11 @@ type game struct {
 
 	trainer *bluetooth.Device
 	State   state.GameState
+	opts    Opts
+}
+
+type Opts struct {
+	Headless bool
 }
 
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -68,6 +73,10 @@ func (g *game) Update() error {
 }
 
 func (g *game) Draw(screen *ebiten.Image) {
+	if g.opts.Headless {
+		return
+	}
+
 	for _, s := range g.sprites {
 		s.Draw(screen)
 	}
@@ -81,7 +90,7 @@ func getCurrentMonitorSize() (int, int) {
 	return width, height
 }
 
-func newGame(training training.Training, trainer *bluetooth.Device) *game {
+func newGame(training training.Training, trainer *bluetooth.Device, opts Opts) *game {
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
@@ -100,6 +109,7 @@ func newGame(training training.Training, trainer *bluetooth.Device) *game {
 			Training: training,
 		},
 		trainer: trainer,
+		opts:    opts,
 	}
 
 	return game
@@ -111,8 +121,8 @@ func (g *game) subscribe(tr *bluetooth.Device) {
 	g.subscribeCadence(tr)
 }
 
-func Run(training training.Training, trainer *bluetooth.Device, route gpx.Gpx) {
-	game := newGame(training, trainer)
+func Run(training training.Training, trainer *bluetooth.Device, route gpx.Gpx, opts Opts) {
+	game := newGame(training, trainer, opts)
 
 	ebiten.SetWindowDecorated(false)
 	ebiten.SetWindowFloating(true)
