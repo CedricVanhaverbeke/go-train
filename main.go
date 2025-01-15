@@ -11,7 +11,12 @@ import (
 	"overlay/pkg/gpx"
 )
 
-var mock = flag.Bool("m", false, "Sets up a mock trainer instead of connecting to a real trainer")
+var mock = flag.Bool(
+	"mock",
+	false,
+	"Sets up a mock trainer instead of connecting to a real trainer",
+)
+var headless = flag.Bool("headless", false, "Sets up the game in headless mode for testing")
 
 func newDevice() (*bluetooth.Device, error) {
 	if *mock {
@@ -41,16 +46,18 @@ func main() {
 
 	// use the data to build a gpx file
 	go func() {
-		gpxFile.Build(trainer)
+		gpxFile.Build(trainer, &helloWorldRoute)
 	}()
 
-	fmt.Println(helloWorldRoute.Distance())
-	fmt.Println(helloWorldRoute.Slope(0, 1))
+	fmt.Println("distance of route (in m)", helloWorldRoute.Distance())
 
 	// use the data to run the game
 	// the game needs to run in the main thread according
 	// to the ebiten spec
-	game.Run(training, trainer, helloWorldRoute)
+	opts := game.Opts{
+		Headless: *headless,
+	}
+	game.Run(training, trainer, helloWorldRoute, opts)
 
 	slog.Info("Game ended")
 }
