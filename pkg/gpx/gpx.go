@@ -2,7 +2,9 @@ package gpx
 
 import (
 	"encoding/xml"
+	"fmt"
 	"math"
+	"overlay/internal/physics"
 	"time"
 )
 
@@ -116,11 +118,12 @@ func (g *Gpx) Slope(i int, j int) float64 {
 		// make a right triangle, the slope in degrees is
 		// tan(alpha) = el / distance
 		tans := el / distance
-		curs := math.Tanh(tans)
+		curs := math.Atan(tans)
 
 		s += curs
 	}
-	return s
+
+	return s / float64(j-i)
 }
 
 var EARTH_RADIUS = 6371e3
@@ -137,4 +140,42 @@ func haversine(lng1 float64, lat1 float64, lng2 float64, lat2 float64) float64 {
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
 	return EARTH_RADIUS * c
+}
+
+// Speed determines the initial speed of a route
+// this is important to determine the progression
+// the biker has made in a route. or something like that
+// I'll see
+func (g *Gpx) Speed(distance float64, power int) float64 {
+	// Get slope for the current distance
+	_, _, i, j := g.GetLatLngByDistance(distance)
+	slope := g.Slope(i, j)
+	fmt.Println("slope: ", slope)
+
+	return physics.CalculateSpeed(float64(power))
+}
+
+// GetLatLngByDistance returns lat/lng coordinates based on the driven distance
+func (g *Gpx) GetLatLngByDistance(distance float64) (lat float64, lng float64, i int, j int) {
+	// 1. find the part of the route where the distance(a, b) < distance < distance(b, c)
+	i = 1
+	total := g.Distance()
+	for float64(int(g.distance(0, i))%int(total)) < distance {
+		i++
+		if i == len(g.Trk.Trkseg.Trkpt)-1 {
+			i = 0
+		}
+
+	}
+
+	// now we know the point where distance becomes bigger so the
+	// point should be between the following two points
+	pt1 := g.Trk.Trkseg.Trkpt[i-1]
+	pt2 := g.Trk.Trkseg.Trkpt[i]
+	d := g.distance(i-1, i)
+
+	latD := ((pt2.Lat - pt1.Lat) / d) * distance
+	lngD := ((pt2.Lon - pt1.Lon) / d) * distance
+
+	return pt1.Lat + latD, pt2.Lon + lngD, i - 1, i
 }
