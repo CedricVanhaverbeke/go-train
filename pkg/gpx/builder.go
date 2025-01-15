@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"overlay/pkg/bluetooth"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -17,35 +18,32 @@ type chanAvailability struct {
 
 func setupChannels(
 	trainer *bluetooth.Device,
-) (power chanAvailability, speed chanAvailability, cadence chanAvailability) {
+) (power chanAvailability, cadence chanAvailability) {
 	filePowerChan := make(chan int)
 	hasPower := trainer.Power.AddListener(filePowerChan)
 	power = chanAvailability{c: filePowerChan, available: hasPower}
 
 	fileCadenceChar := make(chan int)
 	hasCadence := trainer.Cadence.AddListener(fileCadenceChar)
-	speed = chanAvailability{c: fileCadenceChar, available: hasCadence}
-
-	fileSpeedChar := make(chan int)
-	hasSpeed := trainer.Speed.AddListener(fileSpeedChar)
-	cadence = chanAvailability{c: fileSpeedChar, available: hasSpeed}
+	cadence = chanAvailability{c: fileCadenceChar, available: hasCadence}
 
 	// the values are implicitely returned but I don't like that
 	// it's just for readability when using this function
-	return power, speed, cadence
+	return power, cadence
 }
 
 // Build waits for a trackpoint
 // to be ready to be added to
 // the gpx struct
-func (data *Gpx) Build(trainer *bluetooth.Device) {
-	power, speed, cadence := setupChannels(trainer)
+func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
+	power, cadence := setupChannels(trainer)
+	distance := 0.0
+	seconds := 0
 
 	for {
 		wg := sync.WaitGroup{}
 		var powV int
 		var cadV int
-		var speedV int
 
 		wg.Add(1)
 		go func() {
@@ -69,32 +67,30 @@ func (data *Gpx) Build(trainer *bluetooth.Device) {
 			wg.Done()
 		}()
 
-		wg.Add(1)
-		go func() {
-			if !speed.available {
-				wg.Done()
-			}
-
-			// calculate distance in route
-			s := <-speed.c
-			speedV = s
-			wg.Done()
-		}()
-
 		wg.Wait()
+
+		seconds += 2
+		vrel := route.Speed(distance, powV)
+		vrelms := vrel / 3.6
+		distance += vrelms * float64(seconds)
+
+		lat, lng, _, _ := route.GetLatLngByDistance(distance)
 
 		slog.Info(
 			fmt.Sprintf(
-				"Adding trackpoint with power %d, cadence %d and speed %d",
+				"Adding trackpoint with power %d, cadence %d and speed %d, distance %f lat %f, lng %f",
 				powV,
 				cadV,
-				speedV,
+				vrel,
+				distance,
+				lat,
+				lng,
 			),
 		)
 
 		data.AddTrackpoint(NewTrackpoint(
-			"23.3581890",
-			"54.9870280",
+			strconv.FormatFloat(lat, 'f', 6, 64),
+			strconv.FormatFloat(lng, 'f', 6, 64),
 			WithPower(powV),
 			WithCadence(cadV),
 		))
