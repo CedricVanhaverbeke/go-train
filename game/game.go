@@ -117,7 +117,6 @@ func newGame(training training.Training, trainer *bluetooth.Device, opts Opts) *
 
 func (g *game) subscribe(tr *bluetooth.Device) {
 	g.subscribePwr(tr)
-	g.subscribeSpeed(tr)
 	g.subscribeCadence(tr)
 }
 
