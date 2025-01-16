@@ -178,5 +178,5 @@ func (g *Gpx) GetLatLngByDistance(distance float64) (lat float64, lng float64, i
 	latD := ((pt2.Lat - pt1.Lat) / d) * distance
 	lngD := ((pt2.Lon - pt1.Lon) / d) * distance
 
-	return pt1.Lat + latD, pt2.Lon + lngD, i - 1, i
+	return pt1.Lat + latD, pt1.Lon + lngD, i - 1, i
 }
