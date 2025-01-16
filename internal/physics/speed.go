@@ -6,7 +6,7 @@ import (
 
 // calculateSpeed calculates the speed based on the given power
 // stolen from https://www.endurance-data.com/en/power-to-speed-calculator-pro/
-func CalculateSpeed(power float64) float64 {
+func CalculateSpeed(power float64, slope float64) float64 {
 	// Default values for other parameters
 	weight := 82.0                // Weight in kg
 	cda := 0.270                  // Drag coefficient times frontal area in m^2
@@ -30,7 +30,7 @@ func CalculateSpeed(power float64) float64 {
 	// Coefficients for the cubic equation
 	a := 0.5 * cda * airDensity
 	b := 0.0 // No quadratic term
-	c := crr * weight * gravity
+	c := crr*weight*gravity*math.Cos(slope) + weight*gravity*math.Sin(slope)
 	d := -effectivePower
 
 	// Solve the cubic equation using Cardano's method
