@@ -9,14 +9,8 @@ type trkpt struct {
 	Ele        float64 `xml:"ele"`
 	Time       string  `xml:"time"`
 	Extensions struct {
-		Text  string `xml:",chardata"`
-		Power int    `xml:"power"`
-		// The bottom should produce something
-		// like this
-		//   <gpxtpx:TrackPointExtension>
-		//  <gpxtpx:hr>0</gpxtpx:hr>
-		//  <gpxtpx:cad>0</gpxtpx:cad>
-		// </gpxtpx:TrackPointExtension>
+		Text                string `xml:",chardata"`
+		Power               int    `xml:"power"`
 		TrackPointExtension struct {
 			Text string `xml:",chardata"`
 			Hr   int    `xml:"hr,omitempty"`
@@ -27,12 +21,14 @@ type trkpt struct {
 
 type trkOpt = func(trkpt *trkpt)
 
-func NewTrackpoint(lat string, long string, opts ...trkOpt) trkpt {
+func NewTrackpoint(lat float64, lng float64, opts ...trkOpt) trkpt {
 	pt := trkpt{}
 
 	time := time.Now().Format(time.RFC3339)
 	pt.Time = time
 	pt.Ele = 0.0
+	pt.Lat = lat
+	pt.Lon = lng
 
 	for _, opt := range opts {
 		opt(&pt)
