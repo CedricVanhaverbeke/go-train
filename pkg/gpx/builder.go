@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"overlay/pkg/bluetooth"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -89,12 +88,14 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 			),
 		)
 
-		data.AddTrackpoint(NewTrackpoint(
-			strconv.FormatFloat(lat, 'f', 6, 64),
-			strconv.FormatFloat(lng, 'f', 6, 64),
+		tp := NewTrackpoint(
+			lat,
+			lng,
 			WithPower(powV),
 			WithCadence(cadV),
-		))
+		)
+
+		data.AddTrackpoint(tp)
 
 		// not ideal, but this is a way to write to a file
 		// figure out how we could catch a terminate or interrupt signal
