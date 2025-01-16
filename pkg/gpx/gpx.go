@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"math"
+	"overlay/internal/angle"
 	"overlay/internal/physics"
 	"time"
 )
@@ -150,9 +151,9 @@ func (g *Gpx) Speed(distance float64, power int) float64 {
 	// Get slope for the current distance
 	_, _, i, j := g.GetLatLngByDistance(distance)
 	slope := g.Slope(i, j)
-	fmt.Println("slope: ", slope)
+	fmt.Println("slope: ", angle.ToDegrees(slope))
 
-	return physics.CalculateSpeed(float64(power))
+	return physics.CalculateSpeed(float64(power), slope)
 }
 
 // GetLatLngByDistance returns lat/lng coordinates based on the driven distance
