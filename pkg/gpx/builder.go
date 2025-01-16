@@ -38,7 +38,6 @@ func setupChannels(
 func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 	power, cadence := setupChannels(trainer)
 	distance := 0.0
-	seconds := 0
 
 	for {
 		wg := sync.WaitGroup{}
@@ -69,16 +68,18 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 
 		wg.Wait()
 
-		seconds += 2
 		vrel := route.Speed(distance, powV)
 		vrelms := vrel / 3.6
-		distance += vrelms * float64(seconds)
+
+		// every two seconds this updates
+		// TODO: chek this out better
+		distance += vrelms * float64(2)
 
 		lat, lng, _, _ := route.GetLatLngByDistance(distance)
 
 		slog.Info(
 			fmt.Sprintf(
-				"Adding trackpoint with power %d, cadence %d and speed %d, distance %f lat %f, lng %f",
+				"Adding trackpoint with power %d, cadence %d and speed %f, distance %f lat %f, lng %f",
 				powV,
 				cadV,
 				vrel,
