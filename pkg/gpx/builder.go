@@ -8,6 +8,7 @@ import (
 	"overlay/pkg/bluetooth"
 	"strings"
 	"sync"
+	"time"
 )
 
 type chanAvailability struct {
@@ -39,6 +40,7 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 	distance := 0.0
 
 	for {
+		before := time.Now()
 		wg := sync.WaitGroup{}
 		var powV int
 		var cadV int
@@ -66,14 +68,13 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 		}()
 
 		wg.Wait()
+		after := time.Now()
+		timeD := (after.Sub(before)).Seconds()
 
 		vrel := route.Speed(distance, powV)
 		vrelms := vrel / 3.6
 
-		// every two seconds this updates
-		// TODO: chek this out better
-		distance += vrelms * float64(2)
-
+		distance += vrelms * float64(timeD)
 		lat, lng, ele, _, _ := route.CoordInfo(distance)
 
 		slog.Info(
