@@ -149,16 +149,15 @@ func haversine(lng1 float64, lat1 float64, lng2 float64, lat2 float64) float64 {
 // I'll see
 func (g *Gpx) Speed(distance float64, power int) float64 {
 	// Get slope for the current distance
-	_, _, i, j := g.GetLatLngByDistance(distance)
+	_, _, _, i, j := g.CoordInfo(distance)
 	slope := g.Slope(i, j)
 	fmt.Println("slope: ", angle.ToDegrees(slope))
 
 	return physics.CalculateSpeed(float64(power), slope)
 }
 
-// GetLatLngByDistance returns lat/lng coordinates based on the driven distance
-func (g *Gpx) GetLatLngByDistance(distance float64) (lat float64, lng float64, i int, j int) {
-	// 1. find the part of the route where the distance(a, b) < distance < distance(b, c)
+// CoordInfo returns lat/lng coordinates based on the driven distance
+func (g *Gpx) CoordInfo(distance float64) (lat float64, lng float64, ele float64, i int, j int) {
 	i = 1
 	total := g.Distance()
 	for float64(int(g.distance(0, i))%int(total)) < distance {
@@ -177,6 +176,7 @@ func (g *Gpx) GetLatLngByDistance(distance float64) (lat float64, lng float64, i
 
 	latD := ((pt2.Lat - pt1.Lat) / d) * distance
 	lngD := ((pt2.Lon - pt1.Lon) / d) * distance
+	eleD := ((pt2.Ele - pt1.Ele) / d) * distance
 
-	return pt1.Lat + latD, pt1.Lon + lngD, i - 1, i
+	return pt1.Lat + latD, pt1.Lon + lngD, pt1.Ele + eleD, i - 1, i
 }

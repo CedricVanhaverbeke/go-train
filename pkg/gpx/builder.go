@@ -74,7 +74,7 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 		// TODO: chek this out better
 		distance += vrelms * float64(2)
 
-		lat, lng, _, _ := route.GetLatLngByDistance(distance)
+		lat, lng, ele, _, _ := route.CoordInfo(distance)
 
 		slog.Info(
 			fmt.Sprintf(
@@ -93,6 +93,7 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 			lng,
 			WithPower(powV),
 			WithCadence(cadV),
+			WithElevation(ele),
 		)
 
 		data.AddTrackpoint(tp)
