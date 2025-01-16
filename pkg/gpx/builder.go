@@ -32,44 +32,71 @@ func setupChannels(
 	return power, cadence
 }
 
+func valuesWait(power chanAvailability, cadence chanAvailability) (int, int) {
+	wg := sync.WaitGroup{}
+	var powV int
+	var cadV int
+
+	wg.Add(1)
+	go func() {
+		if !power.available {
+			wg.Done()
+		}
+
+		p := <-power.c
+		powV = p
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		if !cadence.available {
+			wg.Done()
+		}
+
+		c := <-cadence.c
+		cadV = c
+		wg.Done()
+	}()
+
+	wg.Wait()
+	return powV, cadV
+}
+
+func writeFile(file *os.File, data *Gpx) error {
+	gpxBytes, err := xml.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	n, err := file.Write(gpxBytes)
+	if err != nil {
+		return err
+	}
+
+	if n != len(gpxBytes) {
+		return err
+	}
+
+	return nil
+}
+
 // Build waits for a trackpoint
 // to be ready to be added to
 // the gpx struct
 func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
+	fileTitle := strings.ReplaceAll(data.Trk.Name, " ", "_")
+	fileTitle += ".gpx"
+
 	power, cadence := setupChannels(trainer)
 	distance := 0.0
 
 	for {
 		before := time.Now()
-		wg := sync.WaitGroup{}
-		var powV int
-		var cadV int
-
-		wg.Add(1)
-		go func() {
-			if !power.available {
-				wg.Done()
-			}
-
-			p := <-power.c
-			powV = p
-			wg.Done()
-		}()
-
-		wg.Add(1)
-		go func() {
-			if !cadence.available {
-				wg.Done()
-			}
-
-			c := <-cadence.c
-			cadV = c
-			wg.Done()
-		}()
-
-		wg.Wait()
 		after := time.Now()
 		timeD := (after.Sub(before)).Seconds()
+
+		powV, cadV := valuesWait(power, cadence)
 
 		vrel := route.Speed(distance, powV)
 		vrelms := vrel / 3.6
@@ -99,34 +126,16 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 
 		data.AddTrackpoint(tp)
 
-		// not ideal, but this is a way to write to a file
-		// figure out how we could catch a terminate or interrupt signal
-		slog.Info("Should append to file")
-		fileTitle := strings.ReplaceAll(data.Trk.Name, " ", "_")
-		fileTitle += ".gpx"
 		file, err := os.Create(fileTitle)
 		if err != nil {
 			slog.Error(err.Error())
 			return
 		}
 
-		gpxBytes, err := xml.Marshal(data)
+		err = writeFile(file, data)
 		if err != nil {
 			slog.Error(err.Error())
 			return
 		}
-
-		n, err := file.Write(gpxBytes)
-		if err != nil {
-			slog.Error(err.Error())
-			return
-		}
-
-		if n != len(gpxBytes) {
-			slog.Error("Did not write whole xml file")
-			return
-		}
-
-		slog.Info("Done writing to file")
 	}
 }
