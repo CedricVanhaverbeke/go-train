@@ -63,7 +63,7 @@ func valuesWait(power chanAvailability, cadence chanAvailability) (int, int) {
 	return powV, cadV
 }
 
-func writeFile(file *os.File, data *Gpx) error {
+func write(file *os.File, data *Gpx) error {
 	gpxBytes, err := xml.Marshal(data)
 	if err != nil {
 		return err
@@ -93,10 +93,11 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 
 	for {
 		before := time.Now()
-		after := time.Now()
-		timeD := (after.Sub(before)).Seconds()
 
 		powV, cadV := valuesWait(power, cadence)
+
+		after := time.Now()
+		timeD := (after.Sub(before)).Seconds()
 
 		vrel := route.Speed(distance, powV)
 		vrelms := vrel / 3.6
@@ -132,7 +133,7 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 			return
 		}
 
-		err = writeFile(file, data)
+		err = write(file, data)
 		if err != nil {
 			slog.Error(err.Error())
 			return
