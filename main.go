@@ -9,6 +9,7 @@ import (
 	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
+	"time"
 )
 
 var mock = flag.Bool(
@@ -54,9 +55,7 @@ func main() {
 	// use the data to run the game
 	// the game needs to run in the main thread according
 	// to the ebiten spec
-	opts := game.Opts{
-		Headless: *headless,
-	}
+	opts := game.NewOpts(game.WithHeadless(*headless), game.WithTickDuration(time.Second))
 	game.Run(training, trainer, helloWorldRoute, opts)
 
 	slog.Info("Game ended")

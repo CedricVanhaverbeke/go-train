@@ -27,7 +27,37 @@ type game struct {
 }
 
 type Opts struct {
+	// Determines if the game runs in headless mode
 	Headless bool
+
+	// Determines how fast the game moves, the default is one second.
+	// This tickDuration exists mainly for testing purposes
+	TickDuration time.Duration
+}
+
+func WithHeadless(headless bool) func(opts *Opts) {
+	return func(opts *Opts) {
+		opts.Headless = headless
+	}
+}
+
+func WithTickDuration(tickDuration time.Duration) func(opts *Opts) {
+	return func(opts *Opts) {
+		opts.TickDuration = tickDuration
+	}
+}
+
+func NewOpts(optsArgs ...func(opts *Opts)) Opts {
+	opts := Opts{
+		Headless:     false,
+		TickDuration: time.Second,
+	}
+
+	for _, arg := range optsArgs {
+		arg(&opts)
+	}
+
+	return opts
 }
 
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -42,7 +72,7 @@ func (g *game) Update() error {
 	prevTimer := g.timer
 	prevPower := training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
 
-	if now.Sub(prevTimer) > time.Second {
+	if now.Sub(prevTimer) > g.opts.TickDuration {
 		g.timer = now
 		g.State.Progress.Tick()
 
