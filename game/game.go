@@ -120,7 +120,7 @@ func getCurrentMonitorSize() (int, int) {
 	return width, height
 }
 
-func newGame(training training.Training, trainer *bluetooth.Device, opts Opts) *game {
+func NewGame(training training.Training, trainer *bluetooth.Device, opts Opts) *game {
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
@@ -151,7 +151,7 @@ func (g *game) subscribe(tr *bluetooth.Device) {
 }
 
 func Run(training training.Training, trainer *bluetooth.Device, route gpx.Gpx, opts Opts) {
-	game := newGame(training, trainer, opts)
+	game := NewGame(training, trainer, opts)
 
 	ebiten.SetWindowDecorated(false)
 	ebiten.SetWindowFloating(true)
@@ -161,7 +161,6 @@ func Run(training training.Training, trainer *bluetooth.Device, route gpx.Gpx, o
 	op := &ebiten.RunGameOptions{}
 	op.ScreenTransparent = true
 	op.SkipTaskbar = true
-
 	// subscribe to all trainer metrics
 	game.subscribe(trainer)
 
