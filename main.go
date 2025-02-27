@@ -21,11 +21,15 @@ var headless = flag.Bool("headless", false, "Sets up the game in headless mode f
 
 func newDevice() (*bluetooth.Device, error) {
 	if *mock {
-		trainer := bluetooth.NewMockDevice()
-		return &trainer, nil
+		return newMockDevice()
 	}
 
 	return bluetooth.Connect()
+}
+
+func newMockDevice() (*bluetooth.Device, error) {
+	trainer := bluetooth.NewMockDevice()
+	return &trainer, nil
 }
 
 func main() {
