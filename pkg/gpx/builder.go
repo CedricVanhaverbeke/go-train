@@ -95,6 +95,13 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 	power, cadence := setupChannels(trainer)
 	distance := 0.0
 
+	tp := NewTrackpoint(
+		route.Trk.Trkseg.Trkpt[0].Lat,
+		route.Trk.Trkseg.Trkpt[0].Lon,
+		WithElevation(route.Trk.Trkseg.Trkpt[0].Ele),
+	)
+	data.AddTrackpoint(tp)
+
 	for {
 		before := time.Now()
 
@@ -104,6 +111,7 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 		timeD := (after.Sub(before)).Seconds()
 
 		vrel := route.Speed(distance, powV)
+
 		vrelms := vrel / 3.6
 
 		distance += vrelms * float64(timeD)
