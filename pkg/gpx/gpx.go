@@ -36,6 +36,7 @@ type trk struct {
 }
 
 type Gpx struct {
+	Path           string   `xml:"-"`
 	XMLName        xml.Name `xml:"gpx"`
 	Text           string   `xml:",chardata"`
 	Xsi            string   `xml:"xsi,attr"`

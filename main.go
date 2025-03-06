@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"os/exec"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	training := training.NewRandom()
-	helloWorldRoute := route.New()
+	helloWorldRoute := route.NewExample()
 
 	title := "Hello World Ride"
 	gpxFile := gpx.New(title)
@@ -63,4 +64,10 @@ func main() {
 	game.Run(training, trainer, helloWorldRoute, opts)
 
 	slog.Info("Game ended")
+	slog.Info(gpxFile.Path)
+	cmd := exec.Command("open", "-a", "GpxSee", gpxFile.Path)
+	err = cmd.Run()
+	if err != nil {
+		slog.Error(err.Error())
+	}
 }

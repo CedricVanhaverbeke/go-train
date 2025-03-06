@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"overlay/pkg/bluetooth"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -87,6 +88,9 @@ func write(file *os.File, data *Gpx) error {
 func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 	fileTitle := strings.ReplaceAll(data.Trk.Name, " ", "_")
 	fileTitle += ".gpx"
+
+	dir, _ := os.Getwd()
+	data.Path = path.Join(dir, fileTitle)
 
 	power, cadence := setupChannels(trainer)
 	distance := 0.0
