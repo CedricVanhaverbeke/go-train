@@ -26,7 +26,6 @@ func NewTrackpoint(lat float64, lng float64, opts ...trkOpt) trkpt {
 
 	time := time.Now().Format(time.RFC3339)
 	pt.Time = time
-	pt.Ele = 0.0
 	pt.Lat = lat
 	pt.Lon = lng
 
