@@ -161,28 +161,39 @@ func (g *Gpx) Speed(distance float64, power int) float64 {
 func (g *Gpx) CoordInfo(distance float64) (lat float64, lng float64, ele float64, i int, j int) {
 	i = 1
 
-	distance = math.Mod(
-		distance,
-		g.Distance(),
-	) // get the floating point remainder of the distance
+	if distance == 0.0 {
+		return g.Trk.Trkseg.Trkpt[0].Lat, g.Trk.Trkseg.Trkpt[0].Lon, g.Trk.Trkseg.Trkpt[0].Ele, 0, 1
+	}
 
-	// look for the index where the distance(0, i) > distance.
-	// we then know the latitude and longitude of this point
-	// TODO: add a check for exceeding the total distance
+	distance = math.Mod(distance, g.Distance()) // Ensure distance wraps correctly
+
+	// Special case: If distance matches total track distance, return last point
+	if distance == g.Distance() {
+		lastIndex := len(g.Trk.Trkseg.Trkpt) - 1
+		return g.Trk.Trkseg.Trkpt[lastIndex].Lat,
+			g.Trk.Trkseg.Trkpt[lastIndex].Lon,
+			g.Trk.Trkseg.Trkpt[lastIndex].Ele,
+			lastIndex - 1, lastIndex
+	}
+
+	// Find segment where distance fits
 	for g.distance(0, i) < distance {
 		i++
 	}
+
 	segmentD := g.distance(i-1, i)
 
-	// now we know the point where distance becomes bigger so the
-	// point should be between the following two points
+	// Ensure segment distance is valid
+	if segmentD == 0 {
+		return g.Trk.Trkseg.Trkpt[i-1].Lat, g.Trk.Trkseg.Trkpt[i-1].Lon, g.Trk.Trkseg.Trkpt[i-1].Ele, i - 1, i
+	}
+
+	d := distance - g.distance(0, i-1)
+	percentage := d / segmentD
+
+	// Interpolate lat/lon/ele
 	pt1 := g.Trk.Trkseg.Trkpt[i-1]
 	pt2 := g.Trk.Trkseg.Trkpt[i]
-
-	// find out the percentage of the current segment
-	// that was already driven
-	d := distance - g.distance(0, i) // this distance should always be positive
-	percentage := (d / segmentD)     // percentage of the segment already ridden
 
 	latD := (pt2.Lat - pt1.Lat) * percentage
 	lngD := (pt2.Lon - pt1.Lon) * percentage
