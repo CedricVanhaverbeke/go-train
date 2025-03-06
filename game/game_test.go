@@ -1,6 +1,7 @@
 package game_test
 
 import (
+	"fmt"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
@@ -15,8 +16,8 @@ func TestGame(t *testing.T) {
 	// for loop until the game exits
 
 	trainer := bluetooth.NewMockDevice()
-	training := training.NewRandom()
-	helloWorldRoute := route.New()
+	tr := training.NewRandom()
+	helloWorldRoute := route.NewExample()
 	title := "Hello World Ride"
 	gpxFile := gpx.New(title)
 
@@ -28,28 +29,44 @@ func TestGame(t *testing.T) {
 		gpxFile.Build(&trainer, &helloWorldRoute)
 	}()
 
-	tickDuration := time.Second
+	tickDuration := time.Millisecond
 	ticker := time.NewTicker(tickDuration)
-	opts := game.NewOpts(game.WithHeadless(true), game.WithTickDuration(tickDuration))
-	g := game.NewGame(training, &trainer, opts)
+	duration := training.Duration(tr)
+	timer := time.NewTimer(time.Duration(duration.Seconds() * float64(time.Millisecond)))
 
-	quit := make(chan struct{})
+	opts := game.NewOpts(game.WithHeadless(true), game.WithTickDuration(tickDuration))
+	g := game.NewGame(tr, &trainer, opts)
+
+	// wait for game to have started
+
+	seconds := 0
+	err := g.Update()
+	if err != nil {
+		t.Error(err)
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
+				seconds++
 				err := g.Update()
-				t.Error(err)
+				if err != nil {
+					t.Error(err)
+				}
+			case <-timer.C:
+				fmt.Println("timer fired")
 				wg.Done()
-			case <-quit:
-				ticker.Stop()
-				return
 			}
 		}
 	}()
 
 	wg.Wait()
-
+	fmt.Println(g.State.Progress.Duration().Seconds())
+	fmt.Println(seconds)
+	if float64(seconds) != g.State.Progress.Duration().Seconds() {
+		t.Error("Should have the same duration")
+	}
 }
