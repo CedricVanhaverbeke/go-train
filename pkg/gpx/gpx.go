@@ -160,24 +160,33 @@ func (g *Gpx) Speed(distance float64, power int) float64 {
 // CoordInfo returns lat/lng coordinates based on the driven distance
 func (g *Gpx) CoordInfo(distance float64) (lat float64, lng float64, ele float64, i int, j int) {
 	i = 1
-	total := g.Distance()
-	for float64(int(g.distance(0, i))%int(total)) < distance {
-		i++
-		if i == len(g.Trk.Trkseg.Trkpt)-1 {
-			i = 0
-		}
 
+	distance = math.Mod(
+		distance,
+		g.Distance(),
+	) // get the floating point remainder of the distance
+
+	// look for the index where the distance(0, i) > distance.
+	// we then know the latitude and longitude of this point
+	// TODO: add a check for exceeding the total distance
+	for g.distance(0, i) < distance {
+		i++
 	}
+	segmentD := g.distance(i-1, i)
 
 	// now we know the point where distance becomes bigger so the
 	// point should be between the following two points
 	pt1 := g.Trk.Trkseg.Trkpt[i-1]
 	pt2 := g.Trk.Trkseg.Trkpt[i]
-	d := g.distance(i-1, i)
 
-	latD := ((pt2.Lat - pt1.Lat) / d) * distance
-	lngD := ((pt2.Lon - pt1.Lon) / d) * distance
-	eleD := ((pt2.Ele - pt1.Ele) / d) * distance
+	// find out the percentage of the current segment
+	// that was already driven
+	d := distance - g.distance(0, i) // this distance should always be positive
+	percentage := (d / segmentD)     // percentage of the segment already ridden
+
+	latD := (pt2.Lat - pt1.Lat) * percentage
+	lngD := (pt2.Lon - pt1.Lon) * percentage
+	eleD := (pt2.Ele - pt1.Ele) * percentage
 
 	return pt1.Lat + latD, pt1.Lon + lngD, pt1.Ele + eleD, i - 1, i
 }
