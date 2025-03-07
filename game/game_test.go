@@ -1,11 +1,15 @@
 package game_test
 
 import (
+	"log/slog"
+	"os"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,9 +28,21 @@ func TestGame(t *testing.T) {
 	// listen for data of the trainer
 	trainer.Listen()
 
+	fileTitle := strings.ReplaceAll(title, " ", "_")
+	fileTitle += ".gpx"
+
+	file, err := os.Create(fileTitle)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	dir, _ := os.Getwd()
+	gpxFile.Path = path.Join(dir, fileTitle)
+
 	// use the data to build a gpx file
 	go func() {
-		gpxFile.Build(&trainer, &helloWorldRoute)
+		gpxFile.Build(&trainer, &helloWorldRoute, file)
 	}()
 
 	tickDuration := 1 * time.Millisecond

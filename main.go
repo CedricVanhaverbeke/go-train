@@ -4,12 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
+	"path"
+	"strings"
 	"time"
 )
 
@@ -50,9 +53,21 @@ func main() {
 	// listen for data of the trainer
 	trainer.Listen()
 
+	fileTitle := strings.ReplaceAll(title, " ", "_")
+	fileTitle += ".gpx"
+
+	file, err := os.Create(fileTitle)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	dir, _ := os.Getwd()
+	gpxFile.Path = path.Join(dir, fileTitle)
+
 	// use the data to build a gpx file
 	go func() {
-		gpxFile.Build(trainer, &helloWorldRoute)
+		gpxFile.Build(trainer, &helloWorldRoute, file)
 	}()
 
 	fmt.Println("distance of route (in m)", helloWorldRoute.Distance())

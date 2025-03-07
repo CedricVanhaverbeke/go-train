@@ -3,11 +3,9 @@ package gpx
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"log/slog"
-	"os"
 	"overlay/pkg/bluetooth"
-	"path"
-	"strings"
 	"sync"
 	"time"
 )
@@ -64,13 +62,13 @@ func valuesWait(power chanAvailability, cadence chanAvailability) (int, int) {
 	return powV, cadV
 }
 
-func write(file *os.File, data *Gpx) error {
+func write(out io.Writer, data *Gpx) error {
 	gpxBytes, err := xml.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	n, err := file.Write(gpxBytes)
+	n, err := out.Write(gpxBytes)
 	if err != nil {
 		return err
 	}
@@ -85,13 +83,7 @@ func write(file *os.File, data *Gpx) error {
 // Build waits for a trackpoint
 // to be ready to be added to
 // the gpx struct
-func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
-	fileTitle := strings.ReplaceAll(data.Trk.Name, " ", "_")
-	fileTitle += ".gpx"
-
-	dir, _ := os.Getwd()
-	data.Path = path.Join(dir, fileTitle)
-
+func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx, out io.Writer) {
 	power, cadence := setupChannels(trainer)
 	distance := 0.0
 
@@ -139,13 +131,7 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 
 		data.AddTrackpoint(tp)
 
-		file, err := os.Create(fileTitle)
-		if err != nil {
-			slog.Error(err.Error())
-			return
-		}
-
-		err = write(file, data)
+		err := write(out, data)
 		if err != nil {
 			slog.Error(err.Error())
 			return
