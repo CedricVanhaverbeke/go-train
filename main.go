@@ -36,6 +36,21 @@ func newMockDevice() (*bluetooth.Device, error) {
 	return &trainer, nil
 }
 
+func writeGpxToFile(fileTitle string, gpxFile gpx.Gpx) error {
+	file, err := os.Create(fileTitle)
+	if err != nil {
+		return err
+	}
+
+	err = gpxFile.Write(file)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func main() {
 	flag.Parse()
 
@@ -56,18 +71,12 @@ func main() {
 	fileTitle := strings.ReplaceAll(title, " ", "_")
 	fileTitle += ".gpx"
 
-	file, err := os.Create(fileTitle)
-	if err != nil {
-		slog.Error(err.Error())
-		return
-	}
-
 	dir, _ := os.Getwd()
 	gpxFile.Path = path.Join(dir, fileTitle)
 
 	// use the data to build a gpx file
 	go func() {
-		gpxFile.Build(trainer, &helloWorldRoute, file)
+		gpxFile.Build(trainer, &helloWorldRoute)
 	}()
 
 	fmt.Println("distance of route (in m)", helloWorldRoute.Distance())
@@ -79,7 +88,11 @@ func main() {
 	game.Run(training, trainer, helloWorldRoute, opts)
 
 	slog.Info("Game ended")
-	slog.Info(gpxFile.Path)
+	err = writeGpxToFile(fileTitle, gpxFile)
+	if err != nil {
+		slog.Error(err.Error())
+	}
+
 	cmd := exec.Command("open", "-a", "GpxSee", gpxFile.Path)
 	err = cmd.Run()
 	if err != nil {

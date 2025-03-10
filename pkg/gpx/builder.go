@@ -62,7 +62,7 @@ func valuesWait(power chanAvailability, cadence chanAvailability) (int, int) {
 	return powV, cadV
 }
 
-func write(out io.Writer, data *Gpx) error {
+func (data *Gpx) Write(out io.Writer) error {
 	gpxBytes, err := xml.Marshal(data)
 	if err != nil {
 		return err
@@ -83,16 +83,9 @@ func write(out io.Writer, data *Gpx) error {
 // Build waits for a trackpoint
 // to be ready to be added to
 // the gpx struct
-func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx, out io.Writer) {
+func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
 	power, cadence := setupChannels(trainer)
 	distance := 0.0
-
-	tp := NewTrackpoint(
-		route.Trk.Trkseg.Trkpt[0].Lat,
-		route.Trk.Trkseg.Trkpt[0].Lon,
-		WithElevation(route.Trk.Trkseg.Trkpt[0].Ele),
-	)
-	data.AddTrackpoint(tp)
 
 	for {
 		before := time.Now()
@@ -130,11 +123,5 @@ func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx, out io.Writer) {
 		)
 
 		data.AddTrackpoint(tp)
-
-		err := write(out, data)
-		if err != nil {
-			slog.Error(err.Error())
-			return
-		}
 	}
 }
