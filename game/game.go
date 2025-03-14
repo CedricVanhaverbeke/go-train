@@ -4,7 +4,7 @@ import (
 	"log"
 	"overlay/game/sprites"
 	"overlay/game/state"
-	"overlay/internal/training"
+	"overlay/internal/workout"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
 	"time"
@@ -70,13 +70,13 @@ func (g *game) Update() error {
 
 	now := time.Now()
 	prevTimer := g.timer
-	prevPower := training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
+	prevPower := workout.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
 
 	if now.Sub(prevTimer) > g.opts.TickDuration {
 		g.timer = now
 		g.State.Progress.Tick()
 
-		newPower := training.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
+		newPower := workout.TrainingPowerAt(g.State.Training, g.State.Progress.Duration())
 
 		// check if we changed the power or the game just started
 		if prevPower != newPower || g.State.Progress.Duration() == 1*time.Second {
@@ -94,7 +94,7 @@ func (g *game) Update() error {
 		}
 	}
 
-	if g.State.Progress.Duration() >= training.Duration(g.State.Training) {
+	if g.State.Progress.Duration() >= workout.Duration(g.State.Training) {
 		// return a termination error
 		return ebiten.Termination
 	}
@@ -120,7 +120,7 @@ func getCurrentMonitorSize() (int, int) {
 	return width, height
 }
 
-func NewGame(training training.Training, trainer *bluetooth.Device, opts Opts) *game {
+func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *game {
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
@@ -150,7 +150,7 @@ func (g *game) subscribe(tr *bluetooth.Device) {
 	g.subscribeCadence(tr)
 }
 
-func Run(training training.Training, trainer *bluetooth.Device, route gpx.Gpx, opts Opts) {
+func Run(training workout.Workout, trainer *bluetooth.Device, route gpx.Gpx, opts Opts) {
 	game := NewGame(training, trainer, opts)
 
 	ebiten.SetWindowDecorated(false)

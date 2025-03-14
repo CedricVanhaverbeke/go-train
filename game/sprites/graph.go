@@ -3,7 +3,7 @@ package sprites
 import (
 	"image/color"
 	"overlay/game/state"
-	"overlay/internal/training"
+	"overlay/internal/workout"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -11,14 +11,14 @@ import (
 )
 
 type graph struct {
-	training training.Training
+	training workout.Workout
 	Width    int
 	Height   int
 	x        int
 	parent   *ebiten.Image
 }
 
-func NewGraph(x, width int, height int, t training.Training) graph {
+func NewGraph(x, width int, height int, t workout.Workout) graph {
 	return graph{
 		Width:    width,
 		Height:   height,
@@ -36,8 +36,8 @@ func (m graph) Update(state state.GameState) {}
 func (m graph) Draw(screen *ebiten.Image) {
 	screenHeight := screen.Bounds().Dy()
 
-	t := training.NewRandom()
-	totalDuration := training.Duration(t)
+	t := workout.NewRandom()
+	totalDuration := workout.Duration(t)
 
 	x := m.x
 	for i, s := range t {
@@ -57,7 +57,7 @@ func (m graph) Draw(screen *ebiten.Image) {
 }
 
 // scaleWidth calculates the width of the training block based on the screen size
-func scaleWidth(s training.TrainingSegment, totalDuration time.Duration, totalWidth int) int {
+func scaleWidth(s workout.WorkoutSegment, totalDuration time.Duration, totalWidth int) int {
 	totalMinutes := totalDuration.Minutes()
 	frac := s.Duration.Minutes() / totalMinutes
 
@@ -65,12 +65,12 @@ func scaleWidth(s training.TrainingSegment, totalDuration time.Duration, totalWi
 }
 
 // scaleHeight calculates the height of a training block depending on the screen height
-func scaleHeight(s training.Training, index int, totalHeight int) int {
+func scaleHeight(s workout.Workout, index int, totalHeight int) int {
 	// a training segment can take a maximum of 1/15 * screen height
 	maxHeight := totalHeight / 15
 
 	// for now, the start and endpower is the same, so just draw that
-	frac := float32(s[index].EndPower) / float32(training.MaxPower(s))
-	h := frac * float32(training.Watts(maxHeight))
+	frac := float32(s[index].EndPower) / float32(workout.MaxPower(s))
+	h := frac * float32(workout.Watts(maxHeight))
 	return int(h)
 }

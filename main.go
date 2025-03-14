@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"overlay/game"
 	"overlay/internal/route"
-	"overlay/internal/training"
+	"overlay/internal/workout"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
 	"path"
@@ -59,7 +59,7 @@ func main() {
 		panic(err)
 	}
 
-	training := training.NewRandom()
+	training := workout.NewRandom()
 	helloWorldRoute := route.NewExample()
 
 	title := "Hello World Ride"

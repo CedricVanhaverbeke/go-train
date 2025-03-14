@@ -3,7 +3,7 @@ package sprites
 import (
 	"image/color"
 	"overlay/game/state"
-	"overlay/internal/training"
+	"overlay/internal/workout"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -25,7 +25,7 @@ func NewProgressLine(x int, y int, width int) *progressLine {
 }
 
 func (p *progressLine) Update(state state.GameState) {
-	step := float64(p.width) / training.Duration(state.Training).Seconds()
+	step := float64(p.width) / workout.Duration(state.Training).Seconds()
 	p.x += step
 }
 

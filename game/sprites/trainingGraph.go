@@ -2,13 +2,13 @@ package sprites
 
 import (
 	"overlay/game/state"
-	"overlay/internal/training"
+	"overlay/internal/workout"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type TrainingGraph struct {
-	training     training.Training
+	training     workout.Workout
 	Width        int
 	Height       int
 	graphSprites []Spriter
@@ -20,7 +20,7 @@ func NewTrainingGraph(
 	screenHeight int,
 	width int,
 	height int,
-	t training.Training,
+	t workout.Workout,
 ) TrainingGraph {
 	startX, _ := CoordCenterRectStart(width, screenWidth)
 

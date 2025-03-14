@@ -5,7 +5,6 @@ import (
 	"os"
 	"overlay/game"
 	"overlay/internal/route"
-	"overlay/internal/training"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
 	"path"
@@ -20,7 +19,7 @@ func TestGame(t *testing.T) {
 	// for loop until the game exits
 
 	trainer := bluetooth.NewMockDevice()
-	tr := training.NewRandom()
+	tr := Workout.NewRandom()
 	helloWorldRoute := route.NewExample()
 	title := "Hello World Ride"
 	gpxFile := gpx.New(title)

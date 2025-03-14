@@ -22,9 +22,9 @@ func setupChannels(
 	hasPower := trainer.Power.AddListener(filePowerChan)
 	power = chanAvailability{c: filePowerChan, available: hasPower}
 
-	fileCadenceChar := make(chan int)
-	hasCadence := trainer.Cadence.AddListener(fileCadenceChar)
-	cadence = chanAvailability{c: fileCadenceChar, available: hasCadence}
+	// fileCadenceChar := make(chan int)
+	// hasCadence := trainer.Cadence.AddListener(fileCadenceChar)
+	// cadence = chanAvailability{c: fileCadenceChar, available: hasCadence}
 
 	// the values are implicitely returned but I don't like that
 	// it's just for readability when using this function
