@@ -1,7 +1,7 @@
 package bluetooth
 
 import (
-	"fmt"
+	"encoding/binary"
 
 	"tinygo.org/x/bluetooth"
 )
@@ -35,8 +35,7 @@ type powerCharacteristic struct {
 // ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
 func (p *powerCharacteristic) ContinuousRead() error {
 	err := p.readPwr.EnableNotifications(func(buf []byte) {
-		power := int16(buf[2]) | int16(buf[3])<<8
-		p.listeners.WriteValue(int(power))
+		p.listeners.WriteValue(decode(buf))
 	})
 
 	return err
@@ -51,21 +50,24 @@ func (p *powerCharacteristic) ContinuousRead() error {
 // is ‘Success’, the Server shall set the target power to the value sent as a Parameter.
 // see page 74 to see how the interaction works
 func (p *powerCharacteristic) Write(power int) (int, error) {
-	// i need to set the power in little endian
-	data := []byte{0x05, 0, 0}
-	i := 1
+	return p.writePwr.Write(encode(power))
+}
 
-	// bitshift it to the right the
-	if power > 256 {
-		i++
-		data[1] = 255
-		power -= 255
+func encode(power int) []byte {
+	if power < 0 {
+		power = power * -1
 	}
 
-	data[i] = byte(power)
-	fmt.Printf("%b\n", data)
+	data := []byte{0x05} // opcode for setting power
+	// since power is postivie this shouldn't matter
+	data = binary.LittleEndian.AppendUint16(data, uint16(power))
+	return data
+}
 
-	return p.writePwr.Write(data)
+func decode(buf []byte) int {
+	buf = buf[2:4]
+	power := binary.LittleEndian.Uint16(buf)
+	return int(power)
 }
 
 // requestControl initiates the procedure
