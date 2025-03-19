@@ -1,23 +1,34 @@
-package bluetooth
+package bluetooth_test
 
-import "testing"
+import (
+	"overlay/pkg/bluetooth"
+	"testing"
+)
 
-func TestDecode(t *testing.T) {
-	bytes := []byte{16, 0, 161, 0, 3, 0, 0, 0, 66, 8}
-	power := decode(bytes)
-	if power != 161 {
-		t.Error("Power should be equal to 161")
+func TestPowerWrite(t *testing.T) {
+	mock := bluetooth.NewMockDevice()
+
+	expected := 300
+	actual, err := mock.Power.Write(expected)
+
+	if err != nil {
+		t.Error("Failed to write")
+	}
+
+	if actual != expected {
+		t.Errorf("Should be 300, got %d", actual)
 	}
 }
 
-func TestEncode(t *testing.T) {
-	power := 300
-	expected := []byte{5, 44, 1}
-	actual := encode(power)
+func TestPowerRead(t *testing.T) {
+	mock := bluetooth.NewMockDevice()
+	c := make(chan int)
 
-	for i := range expected {
-		if expected[i] != actual[i] {
-			t.Errorf("expected %d, got %d\n", expected[i], actual[i])
-		}
+	mock.Power.AddListener(c)
+	_ = mock.Power.ContinuousRead()
+
+	p := <-c
+	if p != 200 {
+		t.Error("Mock device always reads 200")
 	}
 }

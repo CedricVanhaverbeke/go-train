@@ -21,7 +21,7 @@ func (l *listeners) AddListener(c chan int) bool {
 
 func (l *listeners) WriteValue(v int) {
 	for _, listener := range l.listeners {
-		listener <- int(v)
+		listener <- v
 	}
 }
 

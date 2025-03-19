@@ -3,7 +3,7 @@ package bluetooth
 import (
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"slices"
 	"strconv"
 	"time"
 )
@@ -35,7 +35,7 @@ func (p *errorCadenceChar) Write(power int) (int, error) {
 func (p *mockPowerChar) ContinuousRead() error {
 	go func() {
 		for {
-			p.listeners.WriteValue(rand.Intn(200) + 100)
+			p.listeners.WriteValue(200)
 			time.Sleep(2 * time.Second)
 		}
 	}()
@@ -43,9 +43,18 @@ func (p *mockPowerChar) ContinuousRead() error {
 	return nil
 }
 
+func (p *mockPowerChar) AddListener(c chan int) bool {
+	p.listeners.AddListener(c)
+	return true
+}
+
 func (p *mockPowerChar) Write(power int) (int, error) {
 	slog.Info("Should write " + strconv.Itoa(power) + " to trainer")
-	return 0, nil
+	ep := encode(power)
+	// contains three bytes
+	// add a new byte in between
+	newEp := slices.Insert(ep, 1, byte(0))
+	return decode(newEp), nil
 }
 
 func NewMockDevice() Device {
