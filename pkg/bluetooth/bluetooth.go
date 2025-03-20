@@ -1,9 +1,9 @@
 package bluetooth
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"tinygo.org/x/bluetooth"
@@ -53,110 +53,40 @@ func Connect() (*Device, error) {
 // the first char can be used to get power notifications and
 // the second char can be used to set power on the device
 func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
-	found := make(chan bluetooth.ScanResult)
-	powChar := make(chan *bluetooth.DeviceCharacteristic)
-	ftmsChar := make(chan *bluetooth.DeviceCharacteristic)
-	scan := make(chan bool)
+	var powChar *bluetooth.DeviceCharacteristic
+	var ftmsChar *bluetooth.DeviceCharacteristic
+	done := make(chan struct{})
 
 	scanned := map[string]bool{}
+	var wg sync.WaitGroup
 
-	// inner function that starts a new scan operation
-	continueScanning := func(s string) {
-		slog.Info(s)
-		scan <- true
-	}
-
+	wg.Add(1)
 	go func() {
-		for range scan {
-			slog.Info("Scanning bluetooth devices...")
-			err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
-				f := make(chan bluetooth.ScanResult)
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancel()
+		slog.Info("Scanning bluetooth devices...")
+		err := adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
+			if scanned[device.Address.String()] {
+				return
+			}
 
-				go func() {
-					if !scanned[device.Address.String()] {
-						scanned[device.Address.String()] = true
+			scanned[device.Address.String()] = true
 
-						slog.Info("Found device with uuid: " + device.Address.String())
-						f <- device
-						_ = adapter.StopScan()
-						return
-					}
-				}()
+			slog.Info("Found device with uuid: " + device.Address.String())
 
-				select {
-				case device := <-f:
-					found <- device
-				case <-ctx.Done():
-					slog.Info("bluetooth scanning timeout exceeded")
-					powChar <- nil
+			go func() {
+				pChar, ftmsControlPointChar, err := verifyDevice(device)
+				if err != nil {
+					slog.Info(err.Error())
 					return
 				}
-			})
 
-			if err != nil {
-				panic(err)
-			}
-		}
-	}()
+				powChar = pChar
+				ftmsChar = ftmsControlPointChar
+				close(done)
+			}()
+		})
 
-	go func() {
-		for scanResult := range found {
-			slog.Info("Checking device...")
-
-			device, err := adapter.Connect(
-				scanResult.Address,
-				bluetooth.ConnectionParams{
-					ConnectionTimeout: bluetooth.NewDuration(1 * time.Second),
-				},
-			)
-			if err != nil {
-				continueScanning("Cannot connect to device")
-				continue
-			}
-
-			dservices, err := device.DiscoverServices(
-				[]bluetooth.UUID{powServiceUuid, ftmsServiceUuid},
-			)
-			if err != nil {
-				continueScanning("Device does not have cycling power enabled")
-				continue
-			}
-
-			hasCyclingPowerAndFTMS := len(dservices) == 2
-			if !hasCyclingPowerAndFTMS {
-				continueScanning("Device does not have all required services")
-				continue
-			}
-
-			// let's assume the services get fetched in order
-			service := dservices[0]
-
-			chars, err := service.DiscoverCharacteristics(
-				[]bluetooth.UUID{cyclingPowerCharacteristicUuid},
-			)
-			if err != nil {
-				continueScanning("Could not get characteristics " + err.Error())
-				continue
-			}
-
-			charsOk := len(chars) == 1
-			if !charsOk {
-				continueScanning("Device does not have instantaneous power characteristic")
-				continue
-			}
-
-			_ftms := dservices[1]
-			ftmsControlPointChar, err := _ftms.DiscoverCharacteristics(
-				[]bluetooth.UUID{FTMSCharUuid},
-			)
-			if err != nil {
-				continueScanning("Could not scan all characteristics of ftms service")
-			}
-
-			powChar <- &(chars[0])
-			ftmsChar <- &(ftmsControlPointChar[0])
+		if err != nil {
+			panic(err)
 		}
 	}()
 
@@ -167,15 +97,76 @@ func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristi
 		}
 	}()
 
-	// start scanning
-	scan <- true
-
-	char := <-powChar
-	ftmsCPChar := <-ftmsChar
-	slog.Info("Scanning done...")
-	if char == nil {
-		return nil, nil, fmt.Errorf("Supported device not found")
+	select {
+	case <-done:
+		wg.Done()
+	case <-time.After(time.Second * 10):
+		return nil, nil, fmt.Errorf("Bluetooth deadline exceeded, no devices found...")
 	}
 
-	return char, ftmsCPChar, nil
+	wg.Wait()
+	slog.Info("Scanning done...")
+	return powChar, ftmsChar, nil
+}
+
+func verifyDevice(
+	scanResult bluetooth.ScanResult,
+) (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
+	slog.Info("Checking device...")
+
+	device, err := adapter.Connect(
+		scanResult.Address,
+		bluetooth.ConnectionParams{
+			ConnectionTimeout: bluetooth.NewDuration(2 * time.Second),
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dservices, err := device.DiscoverServices(
+		[]bluetooth.UUID{powServiceUuid, ftmsServiceUuid},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Device does not have cycling power enabled")
+	}
+
+	hasCyclingPowerAndFTMS := len(dservices) == 2
+	if !hasCyclingPowerAndFTMS {
+		return nil, nil, fmt.Errorf("Device does not have all required services")
+	}
+
+	cyclingPowerService, ftmsService := dservices[0], dservices[1]
+	pChar, err := getChar(&cyclingPowerService, cyclingPowerCharacteristicUuid)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Could not get characteristics " + err.Error())
+	}
+
+	ftmsControlPointChar, err := getChar(&ftmsService, FTMSCharUuid)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Could not scan all characteristics of ftms service")
+	}
+
+	return &pChar, &ftmsControlPointChar, nil
+}
+
+func getChar(
+	service *bluetooth.DeviceService,
+	charUuid bluetooth.UUID,
+) (bluetooth.DeviceCharacteristic, error) {
+	chars, err := service.DiscoverCharacteristics(
+		[]bluetooth.UUID{charUuid},
+	)
+
+	if err != nil {
+		return bluetooth.DeviceCharacteristic{}, err
+	}
+
+	charsOk := len(chars) == 1
+	if !charsOk {
+		return bluetooth.DeviceCharacteristic{}, fmt.Errorf("Service does not have characteristic")
+	}
+
+	return chars[0], nil
 }
