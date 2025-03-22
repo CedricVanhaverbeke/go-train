@@ -9,16 +9,28 @@ import (
 	"tinygo.org/x/bluetooth"
 )
 
-var adapter = bluetooth.DefaultAdapter
+//go:generate go tool mockgen -source=bluetooth.go -destination=mocks/bluetooth.go -package=bluetooth_mocks
+type bluetoothadapter interface {
+	Scan(callback func(*bluetooth.Adapter, bluetooth.ScanResult)) (err error)
+	StopScan() error
+	Connect(address bluetooth.Address, params bluetooth.ConnectionParams) (bluetooth.Device, error)
+}
+
+//go:generate go tool mockgen -source=bluetooth.go -destination=mocks/bluetooth.go -package=bluetooth_mocks
+type bluetootdevice interface {
+	DiscoverCharacteristics(uuids []bluetooth.UUID) ([]bluetooth.DeviceCharacteristic, error)
+	DiscoverServices(uuids []bluetooth.UUID) ([]bluetooth.DeviceService, error)
+}
 
 func Connect() (*Device, error) {
+	adapter := bluetooth.DefaultAdapter
 	err := adapter.Enable()
 	if err != nil {
 		panic(err)
 	}
 
 	slog.Info("Finding trainer...")
-	readPowerChar, writePowerChar, err := discover()
+	readPowerChar, writePowerChar, err := discover(adapter)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +64,9 @@ func Connect() (*Device, error) {
 //
 // the first char can be used to get power notifications and
 // the second char can be used to set power on the device
-func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
+func discover(
+	adapter bluetoothadapter,
+) (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	var powChar *bluetooth.DeviceCharacteristic
 	var ftmsChar *bluetooth.DeviceCharacteristic
 	done := make(chan struct{})
@@ -73,7 +87,7 @@ func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristi
 			slog.Info("Found device with uuid: " + device.Address.String())
 
 			go func() {
-				pChar, ftmsControlPointChar, err := verifyDevice(device)
+				pChar, ftmsControlPointChar, err := verifyResult(adapter, device)
 				if err != nil {
 					slog.Info(err.Error())
 					return
@@ -109,7 +123,8 @@ func discover() (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristi
 	return powChar, ftmsChar, nil
 }
 
-func verifyDevice(
+func verifyResult(
+	adapter bluetoothadapter,
 	scanResult bluetooth.ScanResult,
 ) (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	slog.Info("Checking device...")
@@ -125,6 +140,13 @@ func verifyDevice(
 		return nil, nil, err
 	}
 
+	return verifyDevice(adapter, device)
+}
+
+func verifyDevice(
+	adapter bluetoothadapter,
+	device bluetooth.Device,
+) (*bluetooth.DeviceCharacteristic, *bluetooth.DeviceCharacteristic, error) {
 	dservices, err := device.DiscoverServices(
 		[]bluetooth.UUID{powServiceUuid, ftmsServiceUuid},
 	)
