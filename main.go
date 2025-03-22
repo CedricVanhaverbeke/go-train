@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"os/signal"
 	"overlay/game"
 	"overlay/internal/route"
 	"overlay/internal/workout"
@@ -85,6 +86,21 @@ func main() {
 	// the game needs to run in the main thread according
 	// to the ebiten spec
 	opts := game.NewOpts(game.WithHeadless(*headless), game.WithTickDuration(time.Second))
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			slog.Info("Program interrupted, writing to file...")
+			err = writeGpxToFile(fileTitle, gpxFile)
+			if err != nil {
+				slog.Error(err.Error())
+			}
+
+			os.Exit(0)
+		}
+	}()
+
 	game.Run(training, trainer, helloWorldRoute, opts)
 
 	slog.Info("Game ended")
