@@ -49,10 +49,9 @@ func writeGpxToFile(fileTitle string, gpxFile gpx.Gpx) error {
 	}
 
 	return nil
-
 }
 
-func main() {
+func newTraining() {
 	flag.Parse()
 
 	trainer, err := newDevice()
@@ -114,4 +113,8 @@ func main() {
 	if err != nil {
 		slog.Error(err.Error())
 	}
+}
+
+func main() {
+	newTraining()
 }

@@ -1,0 +1,1003 @@
+[
+  {
+    "name": "2x15 FTP Intervals",
+    "steps": [
+      {
+        "duration": 600,
+        "power": 40
+      },
+      {
+        "duration": 600,
+        "power": 80
+      },
+      {
+        "duration": 900,
+        "power": 100
+      },
+      {
+        "duration": 600,
+        "power": 60
+      },
+      {
+        "duration": 900,
+        "power": 100
+      },
+      {
+        "duration": 300,
+        "power": 75
+      },
+      {
+        "duration": 300,
+        "power": 40
+      }
+    ]
+  },
+  {
+    "name": "20-40's",
+    "steps": [
+      {
+        "duration": 300,
+        "power": 40
+      },
+      {
+        "duration": 300,
+        "power": 105
+      },
+      {
+        "duration": 120,
+        "power": 50
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 180,
+        "power": 51
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 20,
+        "power": 160
+      },
+      {
+        "duration": 40,
+        "power": 40
+      },
+      {
+        "duration": 300,
+        "power": 70
+      },
+      {
+        "duration": 300,
+        "power": 40
+      }
+    ]
+  },
+  {
+    "name": "45min Riders Choice",
+    "steps": [
+      {
+        "duration": 2700,
+        "power": 55
+      }
+    ]
+  },
+  {
+    "name": "2004",
+    "steps": [
+      {
+        "duration": 480,
+        "power": 35
+      },
+      {
+        "duration": 480,
+        "power": 95
+      },
+      {
+        "duration": 120,
+        "power": 45
+      },
+      {
+        "duration": 600,
+        "power": 65
+      },
+      {
+        "duration": 600,
+        "power": 105
+      },
+      {
+        "duration": 60,
+        "power": 92
+      },
+      {
+        "duration": 30,
+        "power": 102
+      },
+      {
+        "duration": 30,
+        "power": 108
+      },
+      {
+        "duration": 300,
+        "power": 40
+      },
+      {
+        "duration": 600,
+        "power": 65
+      },
+      {
+        "duration": 600,
+        "power": 105
+      },
+      {
+        "duration": 60,
+        "power": 92
+      },
+      {
+        "duration": 30,
+        "power": 102
+      },
+      {
+        "duration": 30,
+        "power": 108
+      },
+      {
+        "duration": 30,
+        "power": 40
+      },
+      {
+        "duration": 300,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 35
+      }
+    ]
+  },
+  {
+    "name": "40/20's into FTP #1",
+    "steps": [
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 30,
+        "power": 94
+      },
+      {
+        "duration": 60,
+        "power": 61
+      },
+      {
+        "duration": 30,
+        "power": 94
+      },
+      {
+        "duration": 60,
+        "power": 61
+      },
+      {
+        "duration": 30,
+        "power": 94
+      },
+      {
+        "duration": 60,
+        "power": 61
+      },
+      {
+        "duration": 30,
+        "power": 94
+      },
+      {
+        "duration": 60,
+        "power": 61
+      },
+      {
+        "duration": 30,
+        "power": 94
+      },
+      {
+        "duration": 60,
+        "power": 61
+      },
+      {
+        "duration": 150,
+        "power": 71
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 600,
+        "power": 95
+      },
+      {
+        "duration": 600,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 40,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 55
+      },
+      {
+        "duration": 600,
+        "power": 95
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 300,
+        "power": 75
+      },
+      {
+        "duration": 150,
+        "power": 50
+      }
+    ]
+  },
+  {
+    "name": "Anaerobic Capacity Into VO2",
+    "steps": [
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 60,
+        "power": 65
+      },
+      {
+        "duration": 60,
+        "power": 75
+      },
+      {
+        "duration": 60,
+        "power": 85
+      },
+      {
+        "duration": 60,
+        "power": 109
+      },
+      {
+        "duration": 120,
+        "power": 50
+      },
+      {
+        "duration": 240,
+        "power": 90
+      },
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 120,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 140
+      },
+      {
+        "duration": 120,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 140
+      },
+      {
+        "duration": 120,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 140
+      },
+      {
+        "duration": 120,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 140
+      },
+      {
+        "duration": 120,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 140
+      },
+      {
+        "duration": 120,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 121
+      },
+      {
+        "duration": 20,
+        "power": 140
+      },
+      {
+        "duration": 120,
+        "power": 65
+      },
+      {
+        "duration": 300,
+        "power": 50
+      },
+      {
+        "duration": 360,
+        "power": 108
+      },
+      {
+        "duration": 20,
+        "power": 120
+      },
+      {
+        "duration": 300,
+        "power": 50
+      }
+    ]
+  },
+  {
+    "name": "Anna van der Breggen - Road Race",
+    "steps": [
+      {
+        "duration": 480,
+        "power": 50
+      },
+      {
+        "duration": 30,
+        "power": 80
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 120,
+        "power": 119
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 60,
+        "power": 137
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 15,
+        "power": 198
+      },
+      {
+        "duration": 300,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 119
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 60,
+        "power": 137
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 15,
+        "power": 198
+      },
+      {
+        "duration": 300,
+        "power": 65
+      },
+      {
+        "duration": 120,
+        "power": 119
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 60,
+        "power": 137
+      },
+      {
+        "duration": 60,
+        "power": 50
+      },
+      {
+        "duration": 15,
+        "power": 198
+      },
+      {
+        "duration": 300,
+        "power": 75
+      },
+      {
+        "duration": 150,
+        "power": 25
+      }
+    ]
+  },
+  {
+    "name": "Arise",
+    "steps": [
+      {
+        "duration": 480,
+        "power": 50
+      },
+      {
+        "duration": 30,
+        "power": 80
+      },
+      {
+        "duration": 30,
+        "power": 110
+      },
+      {
+        "duration": 110,
+        "power": 55
+      },
+      {
+        "duration": 120,
+        "power": 50
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 600,
+        "power": 92
+      },
+      {
+        "duration": 300,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 55
+      },
+      {
+        "duration": 600,
+        "power": 92
+      },
+      {
+        "duration": 300,
+        "power": 55
+      }
+    ]
+  },
+  {
+    "name": "Devedeset Lite",
+    "steps": [
+      {
+        "duration": 300,
+        "power": 25
+      },
+      {
+        "duration": 30,
+        "power": 95
+      },
+      {
+        "duration": 30,
+        "power": 50
+      },
+      {
+        "duration": 30,
+        "power": 105
+      },
+      {
+        "duration": 30,
+        "power": 50
+      },
+      {
+        "duration": 30,
+        "power": 115
+      },
+      {
+        "duration": 30,
+        "power": 50
+      },
+      {
+        "duration": 120,
+        "power": 50
+      },
+      {
+        "duration": 480,
+        "power": 90
+      },
+      {
+        "duration": 180,
+        "power": 55
+      },
+      {
+        "duration": 480,
+        "power": 90
+      },
+      {
+        "duration": 180,
+        "power": 55
+      }
+    ]
+  },
+  {
+    "name": "Elevate and Escalate",
+    "steps": [
+      {
+        "duration": 300,
+        "power": 50
+      },
+      {
+        "duration": 70,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 70
+      },
+      {
+        "duration": 75,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 75
+      },
+      {
+        "duration": 80,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 80
+      },
+      {
+        "duration": 85,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 83
+      },
+      {
+        "duration": 90,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 86
+      },
+      {
+        "duration": 95,
+        "power": 60
+      },
+      {
+        "duration": 300,
+        "power": 70
+      },
+      {
+        "duration": 150,
+        "power": 50
+      }
+    ]
+  },
+  {
+    "name": "Sweet Spot Surges",
+    "steps": [
+      {
+        "duration": 600,
+        "power": 50
+      },
+      {
+        "duration": 1200,
+        "power": 90
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 90
+      },
+      {
+        "duration": 30,
+        "power": 120
+      },
+      {
+        "duration": 30,
+        "power": 90
+      },
+      {
+        "duration": 300,
+        "power": 50
+      }
+    ]
+  },
+  {
+    "name": "VO2 Max Development",
+    "steps": [
+      {
+        "duration": 600,
+        "power": 50
+      },
+      {
+        "duration": 180,
+        "power": 110
+      },
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 180,
+        "power": 110
+      },
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 180,
+        "power": 110
+      },
+      {
+        "duration": 180,
+        "power": 50
+      },
+      {
+        "duration": 180,
+        "power": 110
+      },
+      {
+        "duration": 180,
+        "power": 50
+      }
+    ]
+  },
+  {
+    "name": "Endurance Ride",
+    "steps": [
+      {
+        "duration": 3600,
+        "power": 70
+      }
+    ]
+  }
+]

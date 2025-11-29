@@ -13,14 +13,10 @@ func New() Workout {
 
 func NewRandom() Workout {
 	return []WorkoutSegment{
-		NewSegment(2*time.Minute, 150),
-		NewSegment(1*time.Hour, 195),
-		NewSegment(30*time.Second, 300),
-		NewSegment(30*time.Second, 200),
-		NewSegment(30*time.Second, 300),
-		NewSegment(30*time.Second, 200),
-		NewSegment(20*time.Minute, 195),
-		NewSegment(2*time.Second, 150),
+		NewSegment(5*time.Minute, 120),
+		NewSegment(30*time.Second, 360),
+		NewSegment(30*time.Second, 120),
+		NewSegment(40*time.Minute, 195),
 	}
 }
 

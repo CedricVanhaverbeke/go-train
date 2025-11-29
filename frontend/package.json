@@ -1,0 +1,15 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "An Electron app that starts a Go binary using IPC",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "Cedric Vanhaverbeke",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^39.2.4"
+  }
+}
