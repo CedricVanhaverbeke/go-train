@@ -29,31 +29,87 @@ function formatDuration(seconds) {
     : `${minutes} min`;
 }
 
+function scaleWorkoutDuration(workout, targetDurationSeconds) {
+  if (!workout) return null;
+  const baseTotal = workout.totalDuration ?? getTotalDuration(workout);
+  if (!baseTotal) {
+    return {
+      ...workout,
+      baseTotalDuration: 0,
+      durationScale: 1,
+      steps: workout.steps.map(step => ({ ...step })),
+    };
+  }
+
+  const rawTarget = Number(targetDurationSeconds);
+  const safeTarget = Number.isFinite(rawTarget) ? rawTarget : baseTotal;
+  const minPossible = workout.steps.length || 1;
+  const target = Math.max(Math.round(safeTarget), minPossible);
+  const scale = target / baseTotal;
+
+  const rawDurations = workout.steps.map(step => step.duration * scale);
+  const flooredDurations = rawDurations.map(raw => Math.max(1, Math.floor(raw)));
+  let sum = flooredDurations.reduce((acc, duration) => acc + duration, 0);
+  let remaining = Math.max(target - sum, 0);
+
+  if (remaining > 0) {
+    const remainderOrder = rawDurations
+      .map((raw, index) => ({ index, remainder: raw - Math.floor(raw) }))
+      .sort((a, b) => b.remainder - a.remainder);
+
+    for (let i = 0; i < remainderOrder.length && remaining > 0; i += 1) {
+      flooredDurations[remainderOrder[i].index] += 1;
+      remaining -= 1;
+    }
+  }
+
+  const scaledSteps = workout.steps.map((step, index) => ({
+    ...step,
+    duration: flooredDurations[index],
+  }));
+  const scaledTotalDuration = scaledSteps.reduce((sumDuration, step) => sumDuration + step.duration, 0);
+
+  return {
+    ...workout,
+    steps: scaledSteps,
+    totalDuration: scaledTotalDuration,
+    targetDuration: target,
+    baseTotalDuration: baseTotal,
+    durationScale: scaledTotalDuration / baseTotal,
+  };
+}
+
 // --- Components ---
 
 function WorkoutPreview({ workout, maxPower }) {
   const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
   const barWidthScale = 200 / totalDuration; // Fixed width for the preview
+  const formattedDuration = formatDuration(totalDuration);
 
   let accumulatedDuration = 0;
   return html`
-    <svg width="200" height="100" class="bg-slate-700 rounded">
-      ${workout.steps.map(step => {
-        const barWidth = step.duration * barWidthScale;
-        const barHeight = (step.power / maxPower) * 100;
-        const x = accumulatedDuration * barWidthScale;
-        accumulatedDuration += step.duration;
-        return html`
-          <rect
-            x=${x}
-            y=${100 - barHeight}
-            width=${barWidth}
-            height=${barHeight}
-            fill=${powerToColor(step.power, maxPower)}
-          />
-        `;
-      })}
-    </svg>
+    <div class="relative inline-flex">
+      <svg width="200" height="100" class="bg-slate-700 rounded">
+        ${workout.steps.map(step => {
+          const barWidth = step.duration * barWidthScale;
+          const barHeight = (step.power / maxPower) * 100;
+          const x = accumulatedDuration * barWidthScale;
+          accumulatedDuration += step.duration;
+          return html`
+            <rect
+              x=${x}
+              y=${100 - barHeight}
+              width=${barWidth}
+              height=${barHeight}
+              fill=${powerToColor(step.power, maxPower)}
+            />
+          `;
+        })}
+      </svg>
+      <span class="absolute bottom-2 right-2 rounded bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-100">
+        ${formattedDuration}
+      </span>
+    </div>
   `;
 }
 
@@ -123,15 +179,117 @@ function DurationRangeSlider({
   `;
 }
 
-function WorkoutDetail({ workout, onBack }) {
+function DurationAdjuster({ baseDuration, currentDuration, onChange, stepsCount = 1 }) {
+  if (!Number.isFinite(baseDuration) || baseDuration <= 0) {
+    return null;
+  }
+
+  const safeBase = Math.max(baseDuration, 1);
+  const safeCurrent = Math.max(Number(currentDuration) || safeBase, 1);
+  const sliderLowerBound = Math.max(stepsCount, 10);
+  const sliderMin = Math.max(
+    sliderLowerBound,
+    Math.min(Math.round(safeBase * 0.5), Math.floor(safeCurrent * 0.8))
+  );
+  const sliderMax = Math.max(
+    Math.round(safeBase * 1.5),
+    Math.ceil(safeCurrent * 1.2),
+    sliderMin + 60
+  );
+  const sliderRange = Math.max(sliderMax - sliderMin, 1);
+  const clampedCurrent = Math.min(Math.max(safeCurrent, sliderMin), sliderMax);
+  const sliderPercent = ((clampedCurrent - sliderMin) / sliderRange) * 100;
+  const scalePercent = Math.round((safeCurrent / safeBase) * 100);
+
+  const handleSliderChange = event => {
+    onChange?.(Number(event.target.value));
+  };
+
+  const handleMinutesChange = event => {
+    const minutes = Number(event.target.value);
+    if (!Number.isFinite(minutes)) return;
+    const secondsValue = minutes * 60;
+    onChange?.(Math.max(sliderMin, secondsValue));
+  };
+
+  return html`
+    <div class="space-y-4">
+      <div class="flex items-center justify-between text-sm font-semibold text-slate-200">
+        <span>Adjust duration</span>
+        <span>${formatDuration(safeCurrent)} (${scalePercent}% of original)</span>
+      </div>
+      <div class="relative h-10 flex items-center">
+        <div class="absolute inset-x-0 h-1 bg-slate-700 rounded-full"></div>
+        <div
+          class="absolute h-1 bg-sky-400 rounded-full"
+          style=${{ left: '0%', width: `${sliderPercent}%` }}
+        ></div>
+        <input
+          type="range"
+          min=${sliderMin}
+          max=${sliderMax}
+          step=${30}
+          value=${clampedCurrent}
+          onInput=${handleSliderChange}
+          class="range-thumb absolute inset-0 w-full h-full focus:outline-none"
+        />
+      </div>
+      <div class="flex items-center gap-3 text-sm text-slate-300">
+        <label class="text-xs font-semibold uppercase tracking-wide text-slate-400">Minutes</label>
+        <input
+          type="number"
+          min=${sliderMin / 60}
+          step=${0.5}
+          value=${Number((safeCurrent / 60).toFixed(2))}
+          onInput=${handleMinutesChange}
+          class="w-20 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-right"
+        />
+        <span class="text-xs text-slate-500">min</span>
+        <button
+          type="button"
+          onClick=${() => onChange?.(safeBase)}
+          class="ml-auto text-xs font-semibold text-sky-400 hover:text-sky-300"
+        >
+          Reset
+        </button>
+      </div>
+      <p class="text-xs text-slate-500">Steps are scaled linearly so the workout profile stays intact.</p>
+    </div>
+  `;
+}
+
+function WorkoutDetail({ workout, onBack, maxPower: globalMaxPower, desiredDuration, onDurationChange }) {
   const totalDuration = workout.steps.reduce((sum, step) => sum + step.duration, 0);
-  const maxPower = Math.max(...workout.steps.map(s => s.power));
+  const workoutMaxPower = workout.steps.reduce((max, step) => Math.max(max, step.power), 0);
+  const previewMaxPower = globalMaxPower || workoutMaxPower;
+  const baseDuration = workout.baseTotalDuration ?? totalDuration;
+  const durationScalePercent = baseDuration ? Math.round((totalDuration / baseDuration) * 100) : 100;
 
   return html`
     <div class="space-y-6">
       <button onClick=${onBack} class="text-sky-400 hover:underline">← Back to Workouts</button>
       <h2 class="text-3xl font-bold">${workout.name}</h2>
       <div class="w-full max-w-3xl rounded-2xl bg-slate-800 shadow-xl border border-slate-700 p-8 space-y-6">
+        <section class="space-y-3">
+          <p class="text-sm font-semibold text-slate-200">Workout Preview</p>
+          <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex justify-center">
+            <${WorkoutPreview} workout=${workout} maxPower=${previewMaxPower} />
+          </div>
+        </section>
+        <section class="space-y-3">
+          <p class="text-sm font-semibold text-slate-200">Duration</p>
+          <${DurationAdjuster}
+            baseDuration=${baseDuration}
+            currentDuration=${desiredDuration ?? workout.targetDuration ?? totalDuration}
+            stepsCount=${workout.steps.length}
+            onChange=${onDurationChange}
+          />
+          <div class="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
+            <span>Original: ${formatDuration(baseDuration)}</span>
+            <span>Current: ${formatDuration(totalDuration)}</span>
+            <span>Scale: ${durationScalePercent}%</span>
+          </div>
+        </section>
         <section class="space-y-3">
           <div class="flex items-center gap-4">
             <button id="start-app" class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-6 py-3 font-semibold text-slate-900">
@@ -155,6 +313,7 @@ class App extends Component {
   state = {
     workouts: [],
     selectedWorkout: null,
+    selectedWorkoutTargetDuration: null,
     maxPower: 0,
     sortOrder: 'default',
     durationMin: 0,
@@ -187,7 +346,8 @@ class App extends Component {
   }
   
   selectWorkout = workout => {
-    this.setState({ selectedWorkout: workout }, () => {
+    const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
+    this.setState({ selectedWorkout: workout, selectedWorkoutTargetDuration: totalDuration }, () => {
         // we need to re-add the event listeners after the DOM is updated
         const startButton = document.getElementById('start-app');
         const stopButton = document.getElementById('stop-app');
@@ -235,7 +395,7 @@ class App extends Component {
     });
   };
 
-  unselectWorkout = () => this.setState({ selectedWorkout: null });
+  unselectWorkout = () => this.setState({ selectedWorkout: null, selectedWorkoutTargetDuration: null });
 
   handleSortChange = event => {
     this.setState({ sortOrder: event.target.value });
@@ -249,6 +409,12 @@ class App extends Component {
   handleMaxDurationChange = event => {
     const newMax = Number(event.target.value);
     this.setState(prev => ({ filterMax: Math.max(newMax, prev.filterMin) }));
+  };
+
+  handleSelectedWorkoutDurationChange = newDuration => {
+    const parsed = Number(newDuration);
+    if (!Number.isFinite(parsed)) return;
+    this.setState({ selectedWorkoutTargetDuration: parsed });
   };
 
   getFilteredWorkouts() {
@@ -273,6 +439,7 @@ class App extends Component {
     _,
     {
       selectedWorkout,
+      selectedWorkoutTargetDuration,
       maxPower,
       sortOrder,
       durationMin,
@@ -284,7 +451,14 @@ class App extends Component {
     const workouts = this.getFilteredWorkouts();
 
     if (selectedWorkout) {
-      return html`<${WorkoutDetail} workout=${selectedWorkout} onBack=${this.unselectWorkout} />`;
+      const scaledWorkout = scaleWorkoutDuration(selectedWorkout, selectedWorkoutTargetDuration);
+      return html`<${WorkoutDetail}
+        workout=${scaledWorkout}
+        maxPower=${maxPower}
+        onBack=${this.unselectWorkout}
+        desiredDuration=${selectedWorkoutTargetDuration ?? scaledWorkout?.baseTotalDuration}
+        onDurationChange=${this.handleSelectedWorkoutDurationChange}
+      />`;
     }
 
     return html`
