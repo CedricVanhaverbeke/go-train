@@ -63,6 +63,7 @@ func newTraining() {
 
 	training := workout.NewRandom()
 	if selectedWorkout != nil && *selectedWorkout != "" {
+		slog.Info(*selectedWorkout)
 		training, err = workout.FromString(*selectedWorkout)
 		if err != nil {
 			panic(err)

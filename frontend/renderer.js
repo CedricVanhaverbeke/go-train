@@ -518,7 +518,10 @@ class App extends Component {
   selectWorkout = (workout) => {
     const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
     const workoutString = workout.steps
-      .map(({ power, duration }) => `${power}-${duration}`)
+      .map(
+        ({ power, duration }) =>
+          `${Math.ceil((power / 100) * 270)}-${duration}`,
+      )
       .join(";");
     this.setState(
       {
@@ -542,6 +545,7 @@ class App extends Component {
           startButton.addEventListener("click", () => {
             const appName = "overlay";
             updateStatus(`Renderer: requesting ${appName}...`);
+            console.log(workoutString);
             ipcRenderer.send("START_APP", appName, "-workout", workoutString);
             startButton.disabled = true;
             stopButton.disabled = false;
@@ -574,11 +578,13 @@ class App extends Component {
     );
   };
 
-  unselectWorkout = () =>
+  unselectWorkout = () => {
+    ipcRenderer.send("STOP_APP", "overlay");
     this.setState({
       selectedWorkout: null,
       selectedWorkoutTargetDuration: null,
     });
+  };
 
   handleSortChange = (event) => {
     this.setState({ sortOrder: event.target.value });

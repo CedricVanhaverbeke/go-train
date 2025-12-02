@@ -36,7 +36,7 @@ func (m graph) Update(state state.GameState) {}
 func (m graph) Draw(screen *ebiten.Image) {
 	screenHeight := screen.Bounds().Dy()
 
-	t := workout.NewRandom()
+	t := m.training
 	totalDuration := workout.Duration(t)
 
 	x := m.x
