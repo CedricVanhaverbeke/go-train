@@ -11,15 +11,16 @@ import (
 )
 
 type graph struct {
-	training workout.Workout
-	Width    int
-	Height   int
-	x        int
-	parent   *ebiten.Image
+	training  workout.Workout
+	Width     int
+	Height    int
+	x         int
+	parent    *ebiten.Image
+	gameState state.GameState
 }
 
-func NewGraph(x, width int, height int, t workout.Workout) graph {
-	return graph{
+func NewGraph(x, width int, height int, t workout.Workout) *graph {
+	return &graph{
 		Width:    width,
 		Height:   height,
 		training: t,
@@ -27,29 +28,37 @@ func NewGraph(x, width int, height int, t workout.Workout) graph {
 	}
 }
 
-func (m graph) Parent() *ebiten.Image {
+func (m *graph) Parent() *ebiten.Image {
 	return m.parent
 }
 
-func (m graph) Update(state state.GameState) {}
+func (m *graph) Update(state state.GameState) {
+	m.gameState = state
+}
 
-func (m graph) Draw(screen *ebiten.Image) {
+func (m *graph) Draw(screen *ebiten.Image) {
 	screenHeight := screen.Bounds().Dy()
 
 	t := m.training
 	totalDuration := workout.Duration(t)
 
+	_, currentSegmentIndex := workout.TrainingSegmentAt(t, m.gameState.Progress.Duration())
+
 	x := m.x
 	for i, s := range t {
 		w := scaleWidth(s, totalDuration, m.Width)
 		h := scaleHeight(t, i, screenHeight)
+		c := color.RGBA{85, 165, 34, 50}
+		if i == currentSegmentIndex {
+			c = color.RGBA{255, 165, 34, 50}
+		}
 		vector.DrawFilledRect(
 			screen,
 			float32(x),
 			float32(screenHeight-h),
 			float32(w),
 			float32(h),
-			color.RGBA{85, 165, 34, 50},
+			c,
 			true,
 		)
 		x += w

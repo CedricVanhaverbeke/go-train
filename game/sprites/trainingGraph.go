@@ -21,10 +21,10 @@ func NewTrainingGraph(
 	width int,
 	height int,
 	t workout.Workout,
-) TrainingGraph {
+) *TrainingGraph {
 	startX, _ := CoordCenterRectStart(width, screenWidth)
 
-	return TrainingGraph{
+	return &TrainingGraph{
 		Width:    width,
 		Height:   height,
 		training: t,
@@ -36,13 +36,13 @@ func NewTrainingGraph(
 	}
 }
 
-func (m TrainingGraph) Update(state state.GameState) {
+func (m *TrainingGraph) Update(state state.GameState) {
 	for _, s := range m.graphSprites {
 		s.Update(state)
 	}
 }
 
-func (m TrainingGraph) Draw(screen *ebiten.Image) {
+func (m *TrainingGraph) Draw(screen *ebiten.Image) {
 	for _, s := range m.graphSprites {
 		s.Draw(screen)
 	}

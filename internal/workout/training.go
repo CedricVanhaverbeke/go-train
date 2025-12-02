@@ -93,3 +93,14 @@ func TrainingPowerAt(training Workout, t time.Duration) int {
 	}
 	return -1
 }
+
+func TrainingSegmentAt(training Workout, t time.Duration) (*WorkoutSegment, int) {
+	progr := t
+	for i, tr := range training {
+		if progr < tr.Duration {
+			return &tr, i
+		}
+		progr -= tr.Duration
+	}
+	return nil, -1
+}

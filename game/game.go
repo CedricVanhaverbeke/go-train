@@ -63,6 +63,7 @@ func NewOpts(optsArgs ...func(opts *Opts)) Opts {
 func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return g.width, g.height
 }
+
 func (g *game) Update() error {
 	if !g.State.Progress.Started {
 		return nil
@@ -83,7 +84,6 @@ func (g *game) Update() error {
 			_, err := g.trainer.Power.Write(
 				newPower,
 			)
-
 			if err != nil {
 				slog.Error("could not write power: ", err)
 			}
@@ -124,6 +124,26 @@ func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *ga
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
+	timer, err := sprites.NewTimer()
+	if err != nil {
+		slog.Error("could not create timer: ", err)
+	}
+
+	totalTimer, err := sprites.NewTotalTimer(workout.Duration(training))
+	if err != nil {
+		slog.Error("could not create total timer: ", err)
+	}
+
+	power, err := sprites.NewPower()
+	if err != nil {
+		slog.Error("could not create power: ", err)
+	}
+
+	stepTimer, err := sprites.NewStepTimer()
+	if err != nil {
+		slog.Error("could not create step timer: ", err)
+	}
+
 	game := &game{
 		width:  w,
 		height: h,
@@ -131,8 +151,10 @@ func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *ga
 		timer:  now,
 		sprites: []sprites.Spriter{
 			sprites.NewTrainingGraph(w, h, 500, 200, training),
-			sprites.NewTimer(),
-			sprites.NewPower(),
+			timer,
+			totalTimer,
+			power,
+			stepTimer,
 		},
 		State: state.GameState{
 			Progress: state.NewProgress(),

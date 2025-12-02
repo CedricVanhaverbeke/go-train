@@ -1,46 +1,48 @@
 package sprites
 
 import (
-	"bytes"
 	"image/color"
 	"overlay/game/state"
 	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/opentype"
 )
 
 type power struct {
-	source *text.GoTextFaceSource
-	text   string
-	size   int
+	font font.Face
+	text string
 }
 
-func NewPower() *power {
-	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.PressStart2P_ttf))
+func NewPower() (*power, error) {
+	tt, err := opentype.Parse(goregular.TTF)
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+
+	font, err := opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    48,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &power{
-		source: s,
-		size:   32,
-	}
+		font: font,
+		text: "0",
+	}, nil
 }
 
-func (t *power) Update(state state.GameState) {
-	t.text = strconv.Itoa(state.Metrics.Power)
+func (p *power) Update(state state.GameState) {
+	p.text = strconv.Itoa(state.Metrics.Power)
 }
 
 func (p *power) Draw(screen *ebiten.Image) {
-	op := &text.DrawOptions{}
-	op.GeoM.Translate(float64(screen.Bounds().Dx()-50), float64(p.size)+10)
-	op.ColorScale.ScaleWithColor(color.White)
-	op.LineSpacing = float64(p.size)
-	op.PrimaryAlign = text.AlignCenter
-	text.Draw(screen, p.text, &text.GoTextFace{
-		Source: p.source,
-		Size:   float64(p.size),
-	}, op)
+	text.Draw(screen, p.text, p.font, screen.Bounds().Dx()-150, 100, color.White)
 }
+

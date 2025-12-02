@@ -1,5 +1,7 @@
 const { ipcRenderer } = require("electron");
 
+// set FTP in some setting
+const FTP = 270;
 const { h, Component, render } = window;
 const html = window.htm.bind(h);
 
@@ -86,7 +88,7 @@ function scaleWorkoutDuration(workout, targetDurationSeconds) {
 
 // --- Components ---
 
-function WorkoutPreview({ workout, maxPower, width = 200, height = 100 }) {
+function WorkoutPreview({ workout, width = 200, height = 100 }) {
   const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
   const barWidthScale = width / totalDuration; // Scale bars to the provided width
   const formattedDuration = formatDuration(totalDuration);
@@ -99,18 +101,15 @@ function WorkoutPreview({ workout, maxPower, width = 200, height = 100 }) {
           const startPower = step.start_power || 0;
           const endPower = step.end_power || 0;
           const barWidth = step.duration * barWidthScale;
-          const startHeight = (startPower / maxPower) * height;
-          const endHeight = (endPower / maxPower) * height;
+          const startHeight = (startPower / FTP) * height;
+          const endHeight = (endPower / FTP) * height;
           const x = accumulatedDuration * barWidthScale;
           accumulatedDuration += step.duration;
           const points = `${x},${height} ${x},${height - startHeight} ${x + barWidth},${height - endHeight} ${x + barWidth},${height}`;
           const avgPower = (startPower + endPower) / 2;
 
           return html`
-            <polygon
-              points=${points}
-              fill=${powerToColor(avgPower, maxPower)}
-            />
+            <polygon points=${points} fill=${powerToColor(avgPower, FTP)} />
           `;
         })}
       </svg>
@@ -123,14 +122,14 @@ function WorkoutPreview({ workout, maxPower, width = 200, height = 100 }) {
   `;
 }
 
-function WorkoutCard({ workout, maxPower, onClick }) {
+function WorkoutCard({ workout, onClick }) {
   return html`
     <div
       class="bg-slate-800 rounded-lg shadow-lg p-4 flex flex-col gap-4 cursor-pointer hover:bg-slate-700 transition-colors"
       onClick=${onClick}
     >
       <h3 class="font-bold text-lg">${workout.name}</h3>
-      <${WorkoutPreview} workout=${workout} maxPower=${maxPower} />
+      <${WorkoutPreview} workout=${workout} />
     </div>
   `;
 }
@@ -290,13 +289,7 @@ function DurationAdjuster({
   `;
 }
 
-function WorkoutDetail({
-  workout,
-  onBack,
-  maxPower: globalMaxPower,
-  desiredDuration,
-  onDurationChange,
-}) {
+function WorkoutDetail({ workout, onBack, desiredDuration, onDurationChange }) {
   const totalDuration = workout.steps.reduce(
     (sum, step) => sum + step.duration,
     0,
@@ -305,7 +298,6 @@ function WorkoutDetail({
     (max, step) => Math.max(max, step.end_power),
     0,
   );
-  const previewMaxPower = globalMaxPower || workoutMaxPower;
   const baseDuration = workout.baseTotalDuration ?? totalDuration;
   const durationScalePercent = baseDuration
     ? Math.round((totalDuration / baseDuration) * 100)
@@ -325,12 +317,7 @@ function WorkoutDetail({
           <div
             class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex justify-center"
           >
-            <${WorkoutPreview}
-              workout=${workout}
-              maxPower=${previewMaxPower}
-              width=${480}
-              height=${160}
-            />
+            <${WorkoutPreview} workout=${workout} width=${480} height=${160} />
           </div>
         </section>
         <section class="space-y-3">
@@ -464,7 +451,6 @@ class App extends Component {
     workouts: [],
     selectedWorkout: null,
     selectedWorkoutTargetDuration: null,
-    maxPower: 0,
     sortOrder: "default",
     durationMin: 0,
     durationMax: 0,
@@ -495,10 +481,6 @@ class App extends Component {
         ...workout,
         totalDuration: getTotalDuration(workout),
       }));
-      const powerValues = workoutsWithDuration.flatMap((w) =>
-        w.steps.map((s) => s.end_power),
-      );
-      const maxPower = powerValues.length ? Math.max(...powerValues) : 0;
       const durationValues = workoutsWithDuration.map((w) => w.totalDuration);
       const durationMin = durationValues.length
         ? Math.min(...durationValues)
@@ -509,7 +491,6 @@ class App extends Component {
 
       this.setState({
         workouts: workoutsWithDuration,
-        maxPower,
         durationMin,
         durationMax,
         filterMin: durationMin,
@@ -632,7 +613,6 @@ class App extends Component {
     {
       selectedWorkout,
       selectedWorkoutTargetDuration,
-      maxPower,
       sortOrder,
       durationMin,
       durationMax,
@@ -650,7 +630,6 @@ class App extends Component {
       );
       return html`<${WorkoutDetail}
         workout=${scaledWorkout}
-        maxPower=${maxPower}
         onBack=${this.unselectWorkout}
         desiredDuration=${selectedWorkoutTargetDuration ??
         scaledWorkout?.baseTotalDuration}
@@ -712,7 +691,6 @@ class App extends Component {
             (workout) => html`
               <${WorkoutCard}
                 workout=${workout}
-                maxPower=${maxPower}
                 onClick=${() => this.selectWorkout(workout)}
               />
             `,
