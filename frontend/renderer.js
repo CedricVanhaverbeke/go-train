@@ -96,17 +96,20 @@ function WorkoutPreview({ workout, maxPower, width = 200, height = 100 }) {
     <div class="relative inline-flex">
       <svg width=${width} height=${height} class="bg-slate-700 rounded">
         ${workout.steps.map((step) => {
+          const startPower = step.start_power || 0;
+          const endPower = step.end_power || 0;
           const barWidth = step.duration * barWidthScale;
-          const barHeight = (step.power / maxPower) * height;
+          const startHeight = (startPower / maxPower) * height;
+          const endHeight = (endPower / maxPower) * height;
           const x = accumulatedDuration * barWidthScale;
           accumulatedDuration += step.duration;
+          const points = `${x},${height} ${x},${height - startHeight} ${x + barWidth},${height - endHeight} ${x + barWidth},${height}`;
+          const avgPower = (startPower + endPower) / 2;
+
           return html`
-            <rect
-              x=${x}
-              y=${height - barHeight}
-              width=${barWidth}
-              height=${barHeight}
-              fill=${powerToColor(step.power, maxPower)}
+            <polygon
+              points=${points}
+              fill=${powerToColor(avgPower, maxPower)}
             />
           `;
         })}
@@ -299,7 +302,7 @@ function WorkoutDetail({
     0,
   );
   const workoutMaxPower = workout.steps.reduce(
-    (max, step) => Math.max(max, step.power),
+    (max, step) => Math.max(max, step.end_power),
     0,
   );
   const previewMaxPower = globalMaxPower || workoutMaxPower;
@@ -380,7 +383,7 @@ Waiting for user action...</pre
 class WorkoutCreator extends Component {
   state = {
     name: "",
-    steps: [{ duration: 60, power: 100 }],
+    steps: [{ duration: 60, start_power: 100, end_power: 100 }],
   };
 
   handleNameChange = (e) => {
@@ -493,7 +496,7 @@ class App extends Component {
         totalDuration: getTotalDuration(workout),
       }));
       const powerValues = workoutsWithDuration.flatMap((w) =>
-        w.steps.map((s) => s.power),
+        w.steps.map((s) => s.end_power),
       );
       const maxPower = powerValues.length ? Math.max(...powerValues) : 0;
       const durationValues = workoutsWithDuration.map((w) => w.totalDuration);
@@ -518,10 +521,10 @@ class App extends Component {
   selectWorkout = (workout) => {
     const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
     const workoutString = workout.steps
-      .map(
-        ({ power, duration }) =>
-          `${Math.ceil((power / 100) * 270)}-${duration}`,
-      )
+      .map(({ start_power, end_power, duration }) => {
+        const avgPower = (start_power + end_power) / 2;
+        return `${Math.ceil((avgPower / 100) * 270)}-${duration}`;
+      })
       .join(";");
     this.setState(
       {
