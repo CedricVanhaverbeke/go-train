@@ -60,6 +60,16 @@ function startApp(event, appName, ...args) {
       );
     });
 
+    child.stdout.on("data", (data) => {
+      console.log(data.toString());
+      event.reply("APP_STDOUT", data.toString());
+    });
+
+    child.stderr.on("data", (data) => {
+      console.log(data.toString());
+      event.reply("APP_STDERR", data.toString());
+    });
+
     child.on("error", (error) => {
       event.reply("APP_STATUS", `Failed to start ${appName}: ${error.message}`);
     });
