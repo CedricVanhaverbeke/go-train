@@ -1,7 +1,10 @@
 package workout
 
 import (
+	"errors"
 	"math"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -11,10 +14,33 @@ func New() Workout {
 	return []WorkoutSegment{}
 }
 
+func FromString(workoutString string) (Workout, error) {
+	w := []WorkoutSegment{}
+
+	workoutSteps := strings.SplitSeq(workoutString, ";")
+	for s := range workoutSteps {
+		powerDuration := strings.Split(s, "-")
+		power := powerDuration[0]
+		duration := powerDuration[1]
+
+		pInt, err := strconv.Atoi(power)
+		if err != nil {
+			return nil, errors.New("could not parse workout")
+		}
+
+		durationInt, err := strconv.Atoi(duration)
+		if err != nil {
+			return nil, errors.New("could not parse workout")
+		}
+		w = append(w, NewSegment(time.Second*time.Duration(durationInt), Watts(pInt)))
+	}
+
+	return w, nil
+}
+
 func NewRandom() Workout {
 	return []WorkoutSegment{
-		NewSegment(5*time.Minute, 120),
-		NewSegment(30*time.Second, 360),
+		NewSegment(5*time.Second, 360),
 		NewSegment(30*time.Second, 120),
 		NewSegment(40*time.Minute, 195),
 	}

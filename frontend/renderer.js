@@ -1,11 +1,11 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer } = require("electron");
 
 const { h, Component, render } = window;
 const html = window.htm.bind(h);
 
 // --- Data Fetching ---
 async function getWorkouts() {
-  const response = await fetch('./data.json');
+  const response = await fetch("./data.json");
   return await response.json();
 }
 
@@ -22,7 +22,7 @@ function getTotalDuration(workout) {
 }
 
 function formatDuration(seconds) {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0 min';
+  if (!Number.isFinite(seconds) || seconds < 0) return "0 min";
   const minutes = Math.round(seconds / 60);
   return minutes >= 60
     ? `${(minutes / 60).toFixed(minutes % 60 === 0 ? 0 : 1)} hr`
@@ -37,7 +37,7 @@ function scaleWorkoutDuration(workout, targetDurationSeconds) {
       ...workout,
       baseTotalDuration: 0,
       durationScale: 1,
-      steps: workout.steps.map(step => ({ ...step })),
+      steps: workout.steps.map((step) => ({ ...step })),
     };
   }
 
@@ -47,8 +47,10 @@ function scaleWorkoutDuration(workout, targetDurationSeconds) {
   const target = Math.max(Math.round(safeTarget), minPossible);
   const scale = target / baseTotal;
 
-  const rawDurations = workout.steps.map(step => step.duration * scale);
-  const flooredDurations = rawDurations.map(raw => Math.max(1, Math.floor(raw)));
+  const rawDurations = workout.steps.map((step) => step.duration * scale);
+  const flooredDurations = rawDurations.map((raw) =>
+    Math.max(1, Math.floor(raw)),
+  );
   let sum = flooredDurations.reduce((acc, duration) => acc + duration, 0);
   let remaining = Math.max(target - sum, 0);
 
@@ -67,7 +69,10 @@ function scaleWorkoutDuration(workout, targetDurationSeconds) {
     ...step,
     duration: flooredDurations[index],
   }));
-  const scaledTotalDuration = scaledSteps.reduce((sumDuration, step) => sumDuration + step.duration, 0);
+  const scaledTotalDuration = scaledSteps.reduce(
+    (sumDuration, step) => sumDuration + step.duration,
+    0,
+  );
 
   return {
     ...workout,
@@ -81,24 +86,24 @@ function scaleWorkoutDuration(workout, targetDurationSeconds) {
 
 // --- Components ---
 
-function WorkoutPreview({ workout, maxPower }) {
+function WorkoutPreview({ workout, maxPower, width = 200, height = 100 }) {
   const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
-  const barWidthScale = 200 / totalDuration; // Fixed width for the preview
+  const barWidthScale = width / totalDuration; // Scale bars to the provided width
   const formattedDuration = formatDuration(totalDuration);
 
   let accumulatedDuration = 0;
   return html`
     <div class="relative inline-flex">
-      <svg width="200" height="100" class="bg-slate-700 rounded">
-        ${workout.steps.map(step => {
+      <svg width=${width} height=${height} class="bg-slate-700 rounded">
+        ${workout.steps.map((step) => {
           const barWidth = step.duration * barWidthScale;
-          const barHeight = (step.power / maxPower) * 100;
+          const barHeight = (step.power / maxPower) * height;
           const x = accumulatedDuration * barWidthScale;
           accumulatedDuration += step.duration;
           return html`
             <rect
               x=${x}
-              y=${100 - barHeight}
+              y=${height - barHeight}
               width=${barWidth}
               height=${barHeight}
               fill=${powerToColor(step.power, maxPower)}
@@ -106,7 +111,9 @@ function WorkoutPreview({ workout, maxPower }) {
           `;
         })}
       </svg>
-      <span class="absolute bottom-2 right-2 rounded bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-100">
+      <span
+        class="absolute bottom-2 right-2 rounded bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-100"
+      >
         ${formattedDuration}
       </span>
     </div>
@@ -115,7 +122,10 @@ function WorkoutPreview({ workout, maxPower }) {
 
 function WorkoutCard({ workout, maxPower, onClick }) {
   return html`
-    <div class="bg-slate-800 rounded-lg shadow-lg p-4 flex flex-col gap-4 cursor-pointer hover:bg-slate-700 transition-colors" onClick=${onClick}>
+    <div
+      class="bg-slate-800 rounded-lg shadow-lg p-4 flex flex-col gap-4 cursor-pointer hover:bg-slate-700 transition-colors"
+      onClick=${onClick}
+    >
       <h3 class="font-bold text-lg">${workout.name}</h3>
       <${WorkoutPreview} workout=${workout} maxPower=${maxPower} />
     </div>
@@ -139,9 +149,14 @@ function DurationRangeSlider({
 
   return html`
     <div class="flex-1 space-y-2">
-      <div class="flex items-center justify-between text-sm font-semibold text-slate-300">
+      <div
+        class="flex items-center justify-between text-sm font-semibold text-slate-300"
+      >
         <span>Duration filter</span>
-        <span>${formatDuration(clampedLower)} – ${formatDuration(clampedUpper)}</span>
+        <span
+          >${formatDuration(clampedLower)} –
+          ${formatDuration(clampedUpper)}</span
+        >
       </div>
       <div class="relative h-10 flex items-center">
         <div class="absolute inset-x-0 h-1 bg-slate-700 rounded-full"></div>
@@ -179,7 +194,12 @@ function DurationRangeSlider({
   `;
 }
 
-function DurationAdjuster({ baseDuration, currentDuration, onChange, stepsCount = 1 }) {
+function DurationAdjuster({
+  baseDuration,
+  currentDuration,
+  onChange,
+  stepsCount = 1,
+}) {
   if (!Number.isFinite(baseDuration) || baseDuration <= 0) {
     return null;
   }
@@ -189,23 +209,23 @@ function DurationAdjuster({ baseDuration, currentDuration, onChange, stepsCount 
   const sliderLowerBound = Math.max(stepsCount, 10);
   const sliderMin = Math.max(
     sliderLowerBound,
-    Math.min(Math.round(safeBase * 0.5), Math.floor(safeCurrent * 0.8))
+    Math.min(Math.round(safeBase * 0.5), Math.floor(safeCurrent * 0.8)),
   );
   const sliderMax = Math.max(
     Math.round(safeBase * 1.5),
     Math.ceil(safeCurrent * 1.2),
-    sliderMin + 60
+    sliderMin + 60,
   );
   const sliderRange = Math.max(sliderMax - sliderMin, 1);
   const clampedCurrent = Math.min(Math.max(safeCurrent, sliderMin), sliderMax);
   const sliderPercent = ((clampedCurrent - sliderMin) / sliderRange) * 100;
   const scalePercent = Math.round((safeCurrent / safeBase) * 100);
 
-  const handleSliderChange = event => {
+  const handleSliderChange = (event) => {
     onChange?.(Number(event.target.value));
   };
 
-  const handleMinutesChange = event => {
+  const handleMinutesChange = (event) => {
     const minutes = Number(event.target.value);
     if (!Number.isFinite(minutes)) return;
     const secondsValue = minutes * 60;
@@ -214,15 +234,19 @@ function DurationAdjuster({ baseDuration, currentDuration, onChange, stepsCount 
 
   return html`
     <div class="space-y-4">
-      <div class="flex items-center justify-between text-sm font-semibold text-slate-200">
+      <div
+        class="flex items-center justify-between text-sm font-semibold text-slate-200"
+      >
         <span>Adjust duration</span>
-        <span>${formatDuration(safeCurrent)} (${scalePercent}% of original)</span>
+        <span
+          >${formatDuration(safeCurrent)} (${scalePercent}% of original)</span
+        >
       </div>
       <div class="relative h-10 flex items-center">
         <div class="absolute inset-x-0 h-1 bg-slate-700 rounded-full"></div>
         <div
           class="absolute h-1 bg-sky-400 rounded-full"
-          style=${{ left: '0%', width: `${sliderPercent}%` }}
+          style=${{ left: "0%", width: `${sliderPercent}%` }}
         ></div>
         <input
           type="range"
@@ -235,7 +259,10 @@ function DurationAdjuster({ baseDuration, currentDuration, onChange, stepsCount 
         />
       </div>
       <div class="flex items-center gap-3 text-sm text-slate-300">
-        <label class="text-xs font-semibold uppercase tracking-wide text-slate-400">Minutes</label>
+        <label
+          class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+          >Minutes</label
+        >
         <input
           type="number"
           min=${sliderMin / 60}
@@ -253,34 +280,63 @@ function DurationAdjuster({ baseDuration, currentDuration, onChange, stepsCount 
           Reset
         </button>
       </div>
-      <p class="text-xs text-slate-500">Steps are scaled linearly so the workout profile stays intact.</p>
+      <p class="text-xs text-slate-500">
+        Steps are scaled linearly so the workout profile stays intact.
+      </p>
     </div>
   `;
 }
 
-function WorkoutDetail({ workout, onBack, maxPower: globalMaxPower, desiredDuration, onDurationChange }) {
-  const totalDuration = workout.steps.reduce((sum, step) => sum + step.duration, 0);
-  const workoutMaxPower = workout.steps.reduce((max, step) => Math.max(max, step.power), 0);
+function WorkoutDetail({
+  workout,
+  onBack,
+  maxPower: globalMaxPower,
+  desiredDuration,
+  onDurationChange,
+}) {
+  const totalDuration = workout.steps.reduce(
+    (sum, step) => sum + step.duration,
+    0,
+  );
+  const workoutMaxPower = workout.steps.reduce(
+    (max, step) => Math.max(max, step.power),
+    0,
+  );
   const previewMaxPower = globalMaxPower || workoutMaxPower;
   const baseDuration = workout.baseTotalDuration ?? totalDuration;
-  const durationScalePercent = baseDuration ? Math.round((totalDuration / baseDuration) * 100) : 100;
+  const durationScalePercent = baseDuration
+    ? Math.round((totalDuration / baseDuration) * 100)
+    : 100;
 
   return html`
     <div class="space-y-6">
-      <button onClick=${onBack} class="text-sky-400 hover:underline">← Back to Workouts</button>
+      <button onClick=${onBack} class="text-sky-400 hover:underline">
+        ← Back to Workouts
+      </button>
       <h2 class="text-3xl font-bold">${workout.name}</h2>
-      <div class="w-full max-w-3xl rounded-2xl bg-slate-800 shadow-xl border border-slate-700 p-8 space-y-6">
+      <div
+        class="w-full max-w-3xl rounded-2xl bg-slate-800 shadow-xl border border-slate-700 p-8 space-y-6"
+      >
         <section class="space-y-3">
           <p class="text-sm font-semibold text-slate-200">Workout Preview</p>
-          <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex justify-center">
-            <${WorkoutPreview} workout=${workout} maxPower=${previewMaxPower} />
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex justify-center"
+          >
+            <${WorkoutPreview}
+              workout=${workout}
+              maxPower=${previewMaxPower}
+              width=${480}
+              height=${160}
+            />
           </div>
         </section>
         <section class="space-y-3">
           <p class="text-sm font-semibold text-slate-200">Duration</p>
           <${DurationAdjuster}
             baseDuration=${baseDuration}
-            currentDuration=${desiredDuration ?? workout.targetDuration ?? totalDuration}
+            currentDuration=${desiredDuration ??
+            workout.targetDuration ??
+            totalDuration}
             stepsCount=${workout.steps.length}
             onChange=${onDurationChange}
           />
@@ -292,21 +348,112 @@ function WorkoutDetail({ workout, onBack, maxPower: globalMaxPower, desiredDurat
         </section>
         <section class="space-y-3">
           <div class="flex items-center gap-4">
-            <button id="start-app" class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-6 py-3 font-semibold text-slate-900">
+            <button
+              id="start-app"
+              class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-6 py-3 font-semibold text-slate-900"
+            >
               <span>Start App</span>
             </button>
-            <button id="stop-app" class="inline-flex items-center gap-2 rounded-lg bg-red-500 hover:bg-red-400 transition-colors px-6 py-3 font-semibold text-slate-900 disabled:bg-slate-600 disabled:cursor-not-allowed" disabled>
+            <button
+              id="stop-app"
+              class="inline-flex items-center gap-2 rounded-lg bg-red-500 hover:bg-red-400 transition-colors px-6 py-3 font-semibold text-slate-900 disabled:bg-slate-600 disabled:cursor-not-allowed"
+              disabled
+            >
               <span>Stop App</span>
             </button>
           </div>
           <div>
             <p class="text-sm font-semibold text-slate-200 mb-2">Status</p>
-            <pre id="status-box" class="bg-slate-900 rounded-lg border border-slate-700 p-4 text-green-400 text-sm overflow-auto min-h-[4rem]">Waiting for user action...</pre>
+            <pre
+              id="status-box"
+              class="bg-slate-900 rounded-lg border border-slate-700 p-4 text-green-400 text-sm overflow-auto min-h-[4rem]"
+            >
+Waiting for user action...</pre
+            >
           </div>
         </section>
       </div>
     </div>
   `;
+}
+
+class WorkoutCreator extends Component {
+  state = {
+    name: "",
+    steps: [{ duration: 60, power: 100 }],
+  };
+
+  handleNameChange = (e) => {
+    this.setState({ name: e.target.value });
+  };
+
+  handleStepsChange = (steps) => {
+    this.setState({ steps });
+  };
+
+  handleSave = () => {
+    const { name, steps } = this.state;
+    if (name.trim() === "" || steps.length === 0) {
+      alert("Please provide a name and at least one step for the workout.");
+      return;
+    }
+    const newWorkout = {
+      name: name.trim(),
+      steps,
+    };
+    this.props.onSave(newWorkout);
+  };
+
+  render(_, { name, steps }) {
+    const { VisualWorkoutEditor } = window;
+    return html`
+      <div class="space-y-6">
+        <button
+          onClick=${this.props.onBack}
+          class="text-sky-400 hover:underline"
+        >
+          ← Back to Workouts
+        </button>
+        <h2 class="text-3xl font-bold">Create Workout</h2>
+        <div
+          class="w-full max-w-3xl rounded-2xl bg-slate-800 shadow-xl border border-slate-700 p-8 space-y-6"
+        >
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-slate-300"
+              >Workout Name</label
+            >
+            <input
+              type="text"
+              value=${name}
+              onInput=${this.handleNameChange}
+              class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
+              placeholder="e.g., Morning Spin"
+            />
+          </div>
+
+          <${VisualWorkoutEditor}
+            steps=${steps}
+            onStepsChange=${this.handleStepsChange}
+          />
+
+          <div class="flex items-center gap-4">
+            <button
+              onClick=${this.handleSave}
+              class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-6 py-3 font-semibold text-slate-900"
+            >
+              Save Workout
+            </button>
+            <button
+              onClick=${this.props.onBack}
+              class="text-slate-400 hover:text-slate-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 class App extends Component {
@@ -315,24 +462,47 @@ class App extends Component {
     selectedWorkout: null,
     selectedWorkoutTargetDuration: null,
     maxPower: 0,
-    sortOrder: 'default',
+    sortOrder: "default",
     durationMin: 0,
     durationMax: 0,
     filterMin: 0,
     filterMax: 0,
+    view: "list",
+  };
+
+  showCreateWorkoutView = () => this.setState({ view: "create" });
+
+  showListView = () => this.setState({ view: "list" });
+
+  handleSaveWorkout = (newWorkout) => {
+    const workoutWithDuration = {
+      ...newWorkout,
+      totalDuration: getTotalDuration(newWorkout),
+    };
+
+    this.setState((prevState) => ({
+      workouts: [...prevState.workouts, workoutWithDuration],
+      view: "list",
+    }));
   };
 
   componentDidMount() {
-    getWorkouts().then(workouts => {
-      const workoutsWithDuration = workouts.map(workout => ({
+    getWorkouts().then((workouts) => {
+      const workoutsWithDuration = workouts.map((workout) => ({
         ...workout,
         totalDuration: getTotalDuration(workout),
       }));
-      const powerValues = workoutsWithDuration.flatMap(w => w.steps.map(s => s.power));
+      const powerValues = workoutsWithDuration.flatMap((w) =>
+        w.steps.map((s) => s.power),
+      );
       const maxPower = powerValues.length ? Math.max(...powerValues) : 0;
-      const durationValues = workoutsWithDuration.map(w => w.totalDuration);
-      const durationMin = durationValues.length ? Math.min(...durationValues) : 0;
-      const durationMax = durationValues.length ? Math.max(...durationValues) : 0;
+      const durationValues = workoutsWithDuration.map((w) => w.totalDuration);
+      const durationMin = durationValues.length
+        ? Math.min(...durationValues)
+        : 0;
+      const durationMax = durationValues.length
+        ? Math.max(...durationValues)
+        : 0;
 
       this.setState({
         workouts: workoutsWithDuration,
@@ -344,74 +514,87 @@ class App extends Component {
       });
     });
   }
-  
-  selectWorkout = workout => {
+
+  selectWorkout = (workout) => {
     const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
-    this.setState({ selectedWorkout: workout, selectedWorkoutTargetDuration: totalDuration }, () => {
+    const workoutString = workout.steps
+      .map(({ power, duration }) => `${power}-${duration}`)
+      .join(";");
+    this.setState(
+      {
+        selectedWorkout: workout,
+        selectedWorkoutTargetDuration: totalDuration,
+      },
+      () => {
         // we need to re-add the event listeners after the DOM is updated
-        const startButton = document.getElementById('start-app');
-        const stopButton = document.getElementById('stop-app');
-        const statusBox = document.getElementById('status-box');
+        const startButton = document.getElementById("start-app");
+        const stopButton = document.getElementById("stop-app");
+        const statusBox = document.getElementById("status-box");
 
         const updateStatus = (message) => {
-            const timestamp = new Date().toLocaleTimeString();
-            if (statusBox) {
-                statusBox.textContent = `[${timestamp}] ${message}`;
-            }
+          const timestamp = new Date().toLocaleTimeString();
+          if (statusBox) {
+            statusBox.textContent = `[${timestamp}] ${message}`;
+          }
         };
 
         if (startButton) {
-            startButton.addEventListener('click', () => {
-                const appName = "overlay";
-                updateStatus(`Renderer: requesting ${appName}...`);
-                ipcRenderer.send('START_APP', appName);
-                startButton.disabled = true;
-                stopButton.disabled = false;
-            });
+          startButton.addEventListener("click", () => {
+            const appName = "overlay";
+            updateStatus(`Renderer: requesting ${appName}...`);
+            ipcRenderer.send("START_APP", appName, "-workout", workoutString);
+            startButton.disabled = true;
+            stopButton.disabled = false;
+          });
         }
 
         if (stopButton) {
-            stopButton.addEventListener('click', () => {
-                const appName = "overlay";
-                updateStatus(`Renderer: stopping ${appName}...`);
-                ipcRenderer.send('STOP_APP', appName);
-                startButton.disabled = false;
-                stopButton.disabled = true;
-            });
+          stopButton.addEventListener("click", () => {
+            const appName = "overlay";
+            updateStatus(`Renderer: stopping ${appName}...`);
+            ipcRenderer.send("STOP_APP", appName);
+            startButton.disabled = false;
+            stopButton.disabled = true;
+          });
         }
 
-        ipcRenderer.on('APP_STATUS', (_event, message) => {
-            updateStatus(`Main Process: ${message}`);
+        ipcRenderer.on("APP_STATUS", (_event, message) => {
+          updateStatus(`Main Process: ${message}`);
         });
 
-        ipcRenderer.on('APP_OUTPUT', (_event, data) => {
-            console.log(data);
+        ipcRenderer.on("APP_OUTPUT", (_event, data) => {
+          console.log(data);
         });
 
-        ipcRenderer.on('APP_EXITED', () => {
-            if (startButton) startButton.disabled = false;
-            if (stopButton) stopButton.disabled = true;
+        ipcRenderer.on("APP_EXITED", () => {
+          if (startButton) startButton.disabled = false;
+          if (stopButton) stopButton.disabled = true;
         });
-    });
+      },
+    );
   };
 
-  unselectWorkout = () => this.setState({ selectedWorkout: null, selectedWorkoutTargetDuration: null });
+  unselectWorkout = () =>
+    this.setState({
+      selectedWorkout: null,
+      selectedWorkoutTargetDuration: null,
+    });
 
-  handleSortChange = event => {
+  handleSortChange = (event) => {
     this.setState({ sortOrder: event.target.value });
   };
 
-  handleMinDurationChange = event => {
+  handleMinDurationChange = (event) => {
     const newMin = Number(event.target.value);
-    this.setState(prev => ({ filterMin: Math.min(newMin, prev.filterMax) }));
+    this.setState((prev) => ({ filterMin: Math.min(newMin, prev.filterMax) }));
   };
 
-  handleMaxDurationChange = event => {
+  handleMaxDurationChange = (event) => {
     const newMax = Number(event.target.value);
-    this.setState(prev => ({ filterMax: Math.max(newMax, prev.filterMin) }));
+    this.setState((prev) => ({ filterMax: Math.max(newMax, prev.filterMin) }));
   };
 
-  handleSelectedWorkoutDurationChange = newDuration => {
+  handleSelectedWorkoutDurationChange = (newDuration) => {
     const parsed = Number(newDuration);
     if (!Number.isFinite(parsed)) return;
     this.setState({ selectedWorkoutTargetDuration: parsed });
@@ -419,16 +602,16 @@ class App extends Component {
 
   getFilteredWorkouts() {
     const { workouts, sortOrder, filterMin, filterMax } = this.state;
-    const filtered = workouts.filter(workout => {
+    const filtered = workouts.filter((workout) => {
       const duration = workout.totalDuration ?? getTotalDuration(workout);
       return duration >= filterMin && duration <= filterMax;
     });
 
-    if (sortOrder === 'asc') {
+    if (sortOrder === "asc") {
       return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    if (sortOrder === 'desc') {
+    if (sortOrder === "desc") {
       return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
     }
 
@@ -446,28 +629,52 @@ class App extends Component {
       durationMax,
       filterMin,
       filterMax,
-    }
+      view,
+    },
   ) {
     const workouts = this.getFilteredWorkouts();
 
     if (selectedWorkout) {
-      const scaledWorkout = scaleWorkoutDuration(selectedWorkout, selectedWorkoutTargetDuration);
+      const scaledWorkout = scaleWorkoutDuration(
+        selectedWorkout,
+        selectedWorkoutTargetDuration,
+      );
       return html`<${WorkoutDetail}
         workout=${scaledWorkout}
         maxPower=${maxPower}
         onBack=${this.unselectWorkout}
-        desiredDuration=${selectedWorkoutTargetDuration ?? scaledWorkout?.baseTotalDuration}
+        desiredDuration=${selectedWorkoutTargetDuration ??
+        scaledWorkout?.baseTotalDuration}
         onDurationChange=${this.handleSelectedWorkoutDurationChange}
+      />`;
+    }
+
+    if (view === "create") {
+      return html`<${WorkoutCreator}
+        onSave=${this.handleSaveWorkout}
+        onBack=${this.showListView}
       />`;
     }
 
     return html`
       <div class="space-y-6">
-        <h1 class="text-3xl font-bold">Workouts</h1>
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <h1 class="text-3xl font-bold">Workouts</h1>
+          <button
+            onClick=${this.showCreateWorkoutView}
+            class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-4 py-2 font-semibold text-slate-900"
+          >
+            Create Workout
+          </button>
+        </div>
+        <div
+          class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4"
+        >
           <div class="flex flex-col gap-4 md:flex-row">
             <div class="flex-1">
-              <label class="block text-sm font-semibold text-slate-300 mb-2">Sort</label>
+              <label class="block text-sm font-semibold text-slate-300 mb-2"
+                >Sort</label
+              >
               <select
                 class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-400"
                 value=${sortOrder}
@@ -492,17 +699,19 @@ class App extends Component {
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          ${workouts.map(workout => html`
-            <${WorkoutCard}
-              workout=${workout}
-              maxPower=${maxPower}
-              onClick=${() => this.selectWorkout(workout)}
-            />
-          `)}
+          ${workouts.map(
+            (workout) => html`
+              <${WorkoutCard}
+                workout=${workout}
+                maxPower=${maxPower}
+                onClick=${() => this.selectWorkout(workout)}
+              />
+            `,
+          )}
         </div>
       </div>
     `;
   }
 }
 
-render(html`<${App} />`, document.getElementById('app'));
+render(html`<${App} />`, document.getElementById("app"));

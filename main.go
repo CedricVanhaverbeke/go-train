@@ -24,6 +24,8 @@ var mock = flag.Bool(
 )
 var headless = flag.Bool("headless", false, "Sets up the game in headless mode for testing")
 
+var selectedWorkout = flag.String("workout", "", "workout to start")
+
 func newDevice() (*bluetooth.Device, error) {
 	if *mock {
 		return newMockDevice()
@@ -60,6 +62,13 @@ func newTraining() {
 	}
 
 	training := workout.NewRandom()
+	if selectedWorkout != nil && *selectedWorkout != "" {
+		training, err = workout.FromString(*selectedWorkout)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	helloWorldRoute := route.NewExample()
 
 	title := "Hello World Ride"

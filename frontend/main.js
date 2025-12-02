@@ -37,7 +37,7 @@ function createWindow() {
   mainWindow.loadFile("index.html");
 }
 
-function startApp(event, appName) {
+function startApp(event, appName, ...args) {
   try {
     const builder = AVAILABLE_APPS[appName];
 
@@ -47,9 +47,9 @@ function startApp(event, appName) {
       );
     }
 
-    const { command, args = [], options = {} } = builder();
+    const { command, args: builderArgs, options = {} } = builder();
 
-    child = spawn(command, args, {
+    child = spawn(command, [...args, ...builderArgs], {
       ...options,
     });
 
@@ -89,8 +89,8 @@ function stopApp(event, appName) {
 app.whenReady().then(() => {
   createWindow();
 
-  ipcMain.on("START_APP", (event, appName) => {
-    startApp(event, appName);
+  ipcMain.on("START_APP", (event, ...appName) => {
+    startApp(event, ...appName);
   });
 
   ipcMain.on("STOP_APP", (event, appName) => {
