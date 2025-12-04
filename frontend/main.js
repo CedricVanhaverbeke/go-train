@@ -10,7 +10,11 @@ let child = null;
 const AVAILABLE_APPS = {
   overlay: () => {
     // Path to a compiled Go server binary (replace with your real path).
-    const binary = "/Users/cedricvanhaverbeke/go/bin/overlay";
+    const binary = path.join(
+      __dirname,
+      "..",
+      `overlay-${os.platform()}-${os.arch()}`,
+    );
 
     if (!fs.existsSync(binary)) {
       throw new Error(`Go server binary not found at ${binary}`);

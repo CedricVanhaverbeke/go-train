@@ -4,7 +4,8 @@
   "description": "An Electron app that starts a Go binary using IPC",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "GOOS=darwin GOARCH=arm64 go build -o ../overlay-darwin-arm64 ../.. && GOOS=darwin GOARCH=amd64 go build -o ../overlay-darwin-amd64 ../.. && GOOS=linux GOARCH=arm64 go build -o ../overlay-linux-arm64 ../.. && GOOS=linux GOARCH=amd64 go build -o ../overlay-linux-amd64 ../.."
   },
   "keywords": [],
   "author": "Cedric Vanhaverbeke",

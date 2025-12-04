@@ -1,7 +1,7 @@
 const { ipcRenderer } = require("electron");
 
 // set FTP in some setting
-const FTP = 270;
+const FTP = 260;
 const { h, Component, render } = window;
 const html = window.htm.bind(h);
 
@@ -504,7 +504,7 @@ class App extends Component {
     const workoutString = workout.steps
       .map(({ start_power, end_power, duration }) => {
         const avgPower = (start_power + end_power) / 2;
-        return `${Math.ceil((avgPower / 100) * 270)}-${duration}`;
+        return `${Math.ceil((avgPower / 100) * FTP)}-${duration}`;
       })
       .join(";");
     this.setState(
