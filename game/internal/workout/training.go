@@ -40,7 +40,7 @@ func FromString(workoutString string) (Workout, error) {
 
 func NewRandom() Workout {
 	return []WorkoutSegment{
-		NewSegment(5*time.Second, 360),
+		{Duration: 30 * time.Second, StartPower: 120, EndPower: 150},
 		NewSegment(30*time.Second, 120),
 		NewSegment(40*time.Minute, 195),
 	}

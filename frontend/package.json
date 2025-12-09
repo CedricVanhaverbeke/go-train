@@ -4,13 +4,26 @@
   "description": "An Electron app that starts a Go binary using IPC",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "GOOS=darwin GOARCH=arm64 go build -o ../overlay-darwin-arm64 ../.. && GOOS=darwin GOARCH=amd64 go build -o ../overlay-darwin-amd64 ../.. && GOOS=linux GOARCH=arm64 go build -o ../overlay-linux-arm64 ../.. && GOOS=linux GOARCH=amd64 go build -o ../overlay-linux-amd64 ../.."
+    "start": "electron-forge start",
+    "build-game": "cd ../game && make build",
+    "package": "npm run build-game && electron-forge package",
+    "make": "npm run build-game && electron-forge make && electron-forge make --platform win32 --arch x64"
   },
   "keywords": [],
   "author": "Cedric Vanhaverbeke",
   "license": "ISC",
   "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-deb": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@electron/fuses": "^1.8.0",
     "electron": "^39.2.4"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1"
   }
 }

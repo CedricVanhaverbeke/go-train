@@ -1,7 +1,6 @@
 const { ipcRenderer } = require("electron");
 
-// set FTP in some setting
-const FTP = 260;
+
 const { h, Component, render } = window;
 const html = window.htm.bind(h);
 
@@ -12,8 +11,8 @@ async function getWorkouts() {
 }
 
 // --- Color Scale ---
-function powerToColor(power, maxPower) {
-  const percentage = Math.min(power / maxPower, 1);
+function powerToColor(power, ftp) {
+  const percentage = Math.min(power / ftp, 1);
   const hue = (1 - percentage) * 120; // 120 (green) -> 0 (red)
   return `hsl(${hue}, 100%, 50%)`;
 }
@@ -88,7 +87,7 @@ function scaleWorkoutDuration(workout, targetDurationSeconds) {
 
 // --- Components ---
 
-function WorkoutPreview({ workout, width = 200, height = 100 }) {
+function WorkoutPreview({ workout, width = 200, height = 100, ftp }) {
   const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
   const barWidthScale = width / totalDuration; // Scale bars to the provided width
   const formattedDuration = formatDuration(totalDuration);
@@ -101,15 +100,15 @@ function WorkoutPreview({ workout, width = 200, height = 100 }) {
           const startPower = step.start_power || 0;
           const endPower = step.end_power || 0;
           const barWidth = step.duration * barWidthScale;
-          const startHeight = (startPower / FTP) * height;
-          const endHeight = (endPower / FTP) * height;
+          const startHeight = (startPower / ftp) * height;
+          const endHeight = (endPower / ftp) * height;
           const x = accumulatedDuration * barWidthScale;
           accumulatedDuration += step.duration;
           const points = `${x},${height} ${x},${height - startHeight} ${x + barWidth},${height - endHeight} ${x + barWidth},${height}`;
           const avgPower = (startPower + endPower) / 2;
 
           return html`
-            <polygon points=${points} fill=${powerToColor(avgPower, FTP)} />
+            <polygon points=${points} fill=${powerToColor(avgPower, ftp)} />
           `;
         })}
       </svg>
@@ -122,14 +121,14 @@ function WorkoutPreview({ workout, width = 200, height = 100 }) {
   `;
 }
 
-function WorkoutCard({ workout, onClick }) {
+function WorkoutCard({ workout, onClick, ftp }) {
   return html`
     <div
       class="bg-slate-800 rounded-lg shadow-lg p-4 flex flex-col gap-4 cursor-pointer hover:bg-slate-700 transition-colors"
       onClick=${onClick}
     >
       <h3 class="font-bold text-lg">${workout.name}</h3>
-      <${WorkoutPreview} workout=${workout} />
+      <${WorkoutPreview} workout=${workout} ftp=${ftp} />
     </div>
   `;
 }
@@ -289,7 +288,36 @@ function DurationAdjuster({
   `;
 }
 
-function WorkoutDetail({ workout, onBack, desiredDuration, onDurationChange }) {
+function WorkoutSteps({ steps, ftp }) {
+  function formatStepDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0s";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.round(seconds % 60);
+    return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
+  }
+
+  return html`
+    <div class="space-y-2">
+      <h3 class="text-lg font-semibold text-slate-300">Workout Steps</h3>
+      <ul class="divide-y divide-slate-700">
+        ${steps.map((step, index) => {
+          const avgPower = (step.start_power + step.end_power) / 2;
+          const wattage = Math.ceil((avgPower / 100) * ftp);
+          return html`
+            <li key=${index} class="py-2 flex justify-between items-center">
+              <span class="text-slate-400"
+                >Step ${index + 1}: ${formatStepDuration(step.duration)}</span
+              >
+              <span class="font-semibold text-sky-400">${wattage} W</span>
+            </li>
+          `;
+        })}
+      </ul>
+    </div>
+  `;
+}
+
+function WorkoutDetail({ workout, onBack, desiredDuration, onDurationChange, ftp }) {
   const totalDuration = workout.steps.reduce(
     (sum, step) => sum + step.duration,
     0,
@@ -317,8 +345,11 @@ function WorkoutDetail({ workout, onBack, desiredDuration, onDurationChange }) {
           <div
             class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex justify-center"
           >
-            <${WorkoutPreview} workout=${workout} width=${480} height=${160} />
+            <${WorkoutPreview} workout=${workout} width=${480} height=${160} ftp=${ftp} />
           </div>
+        </section>
+        <section class="space-y-3">
+          <${WorkoutSteps} steps=${workout.steps} ftp=${ftp} />
         </section>
         <section class="space-y-3">
           <p class="text-sm font-semibold text-slate-200">Duration</p>
@@ -394,7 +425,7 @@ class WorkoutCreator extends Component {
     this.props.onSave(newWorkout);
   };
 
-  render(_, { name, steps }) {
+  render({ ftp, onFtpChange }, { name, steps }) {
     const { VisualWorkoutEditor } = window;
     return html`
       <div class="space-y-6">
@@ -424,6 +455,8 @@ class WorkoutCreator extends Component {
           <${VisualWorkoutEditor}
             steps=${steps}
             onStepsChange=${this.handleStepsChange}
+            ftp=${ftp}
+            onFtpChange=${onFtpChange}
           />
 
           <div class="flex items-center gap-4">
@@ -446,6 +479,47 @@ class WorkoutCreator extends Component {
   }
 }
 
+function Settings({ ftp, onFtpChange, onBack }) {
+  const handleFtpChange = (e) => {
+    onFtpChange(e.target.value);
+  };
+
+  const saveFtp = () => {
+    onFtpChange(ftp);
+    onBack();
+  };
+
+  return html`
+    <div class="space-y-6">
+      <button onClick=${onBack} class="text-sky-400 hover:underline">
+        ← Back to Workouts
+      </button>
+      <h2 class="text-3xl font-bold">Settings</h2>
+      <div
+        class="w-full max-w-3xl rounded-2xl bg-slate-800 shadow-xl border border-slate-700 p-8 space-y-6"
+      >
+        <p class="text-slate-400">
+          Update your Functional Threshold Power (FTP).
+        </p>
+        <div class="flex items-center gap-4">
+          <input
+            type="number"
+            value=${ftp}
+            onInput=${handleFtpChange}
+            class="w-32 rounded-md bg-slate-900 border border-slate-600 px-3 py-2 text-center text-lg"
+          />
+          <button
+            onClick=${saveFtp}
+            class="rounded-lg bg-sky-600 hover:bg-sky-500 transition-colors px-6 py-2 font-semibold text-white"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 class App extends Component {
   state = {
     workouts: [],
@@ -457,9 +531,17 @@ class App extends Component {
     filterMin: 0,
     filterMax: 0,
     view: "list",
+    ftp: localStorage.getItem("userFtp") || 250,
+  };
+
+  handleFtpChange = (ftp) => {
+    this.setState({ ftp });
+    localStorage.setItem("userFtp", ftp);
   };
 
   showCreateWorkoutView = () => this.setState({ view: "create" });
+
+  showSettingsView = () => this.setState({ view: "settings" });
 
   showListView = () => this.setState({ view: "list" });
 
@@ -504,7 +586,7 @@ class App extends Component {
     const workoutString = workout.steps
       .map(({ start_power, end_power, duration }) => {
         const avgPower = (start_power + end_power) / 2;
-        return `${Math.ceil((avgPower / 100) * FTP)}-${duration}`;
+        return `${Math.ceil((avgPower / 100) * this.state.ftp)}-${duration}`;
       })
       .join(";");
     this.setState(
@@ -605,6 +687,18 @@ class App extends Component {
       return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
     }
 
+    if (sortOrder === "duration_asc") {
+      return [...filtered].sort(
+        (a, b) => (a.totalDuration ?? 0) - (b.totalDuration ?? 0),
+      );
+    }
+
+    if (sortOrder === "duration_desc") {
+      return [...filtered].sort(
+        (a, b) => (b.totalDuration ?? 0) - (a.totalDuration ?? 0),
+      );
+    }
+
     return filtered;
   }
 
@@ -634,12 +728,23 @@ class App extends Component {
         desiredDuration=${selectedWorkoutTargetDuration ??
         scaledWorkout?.baseTotalDuration}
         onDurationChange=${this.handleSelectedWorkoutDurationChange}
+        ftp=${this.state.ftp}
       />`;
     }
 
     if (view === "create") {
       return html`<${WorkoutCreator}
         onSave=${this.handleSaveWorkout}
+        onBack=${this.showListView}
+        ftp=${this.state.ftp}
+        onFtpChange=${this.handleFtpChange}
+      />`;
+    }
+
+    if (view === "settings") {
+      return html`<${Settings}
+        ftp=${this.state.ftp}
+        onFtpChange=${this.handleFtpChange}
         onBack=${this.showListView}
       />`;
     }
@@ -648,12 +753,20 @@ class App extends Component {
       <div class="space-y-6">
         <div class="flex items-center justify-between">
           <h1 class="text-3xl font-bold">Workouts</h1>
-          <button
-            onClick=${this.showCreateWorkoutView}
-            class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-4 py-2 font-semibold text-slate-900"
-          >
-            Create Workout
-          </button>
+          <div class="flex items-center gap-4">
+            <button
+              onClick=${this.showCreateWorkoutView}
+              class="inline-flex items-center gap-2 rounded-lg bg-sky-500 hover:bg-sky-400 transition-colors px-4 py-2 font-semibold text-slate-900"
+            >
+              Create Workout
+            </button>
+            <button
+              onClick=${this.showSettingsView}
+              class="inline-flex items-center gap-2 rounded-lg bg-slate-600 hover:bg-slate-500 transition-colors px-4 py-2 font-semibold text-slate-100"
+            >
+              Settings
+            </button>
+          </div>
         </div>
         <div
           class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4"
@@ -671,6 +784,8 @@ class App extends Component {
                 <option value="default">Default order</option>
                 <option value="asc">Name A → Z</option>
                 <option value="desc">Name Z → A</option>
+                <option value="duration_asc">Duration (shortest first)</option>
+                <option value="duration_desc">Duration (longest first)</option>
               </select>
             </div>
             <div class="flex-1 space-y-2">
@@ -692,6 +807,7 @@ class App extends Component {
               <${WorkoutCard}
                 workout=${workout}
                 onClick=${() => this.selectWorkout(workout)}
+                ftp=${this.state.ftp}
               />
             `,
           )}

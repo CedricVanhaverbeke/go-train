@@ -46,9 +46,33 @@ func (m *graph) Draw(screen *ebiten.Image) {
 
 	x := m.x
 	for i, s := range t {
-		w := scaleWidth(s, totalDuration, m.Width)
-		h := scaleHeight(t, i, screenHeight)
 		c := color.RGBA{85, 165, 34, 50}
+		w := scaleWidth(s, totalDuration, m.Width)
+		stepInSeconds := float64(w) / float64(s.Duration.Seconds())
+
+		if s.StartPower != s.EndPower {
+			rico := float64(s.EndPower-s.StartPower) / (float64(s.Duration.Seconds()))
+			a := s.EndPower - s.StartPower
+			for i := range w {
+				progress := i * int(stepInSeconds)
+				p := rico*float64(progress) + float64(a)
+				h := scaleHeight(t, p, screenHeight)
+				vector.DrawFilledRect(
+					screen,
+					float32(x),
+					float32(screenHeight-h),
+					float32(w),
+					float32(h),
+					c,
+					true,
+				)
+				x += 1
+			}
+
+			return
+		}
+
+		h := scaleHeightAtIndex(t, i, screenHeight)
 		if i == currentSegmentIndex {
 			c = color.RGBA{255, 165, 34, 50}
 		}
@@ -73,13 +97,17 @@ func scaleWidth(s workout.WorkoutSegment, totalDuration time.Duration, totalWidt
 	return int(frac * float64(totalWidth))
 }
 
-// scaleHeight calculates the height of a training block depending on the screen height
-func scaleHeight(s workout.Workout, index int, totalHeight int) int {
-	// a training segment can take a maximum of 1/15 * screen height
-	maxHeight := totalHeight / 15
+// scaleHeightAtIndex calculates the height of a training block depending on the screen height
+func scaleHeightAtIndex(s workout.Workout, index int, screenHeight int) int {
+	p := float64(s[index].EndPower)
+	return scaleHeight(s, p, screenHeight)
+}
 
-	// for now, the start and endpower is the same, so just draw that
-	frac := float32(s[index].EndPower) / float32(workout.MaxPower(s))
-	h := frac * float32(workout.Watts(maxHeight))
+func scaleHeight(s workout.Workout, p float64, screenHeight int) int {
+	maxHeight := screenHeight / 15
+	maxPower := float64(workout.MaxPower(s))
+
+	frac := p / maxPower
+	h := frac * float64(maxHeight)
 	return int(h)
 }

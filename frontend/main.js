@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 const { spawn } = require("child_process");
 
 // Keep a global reference to the child process.
@@ -9,12 +10,12 @@ let child = null;
 // Define the commands that the renderer is allowed to start.
 const AVAILABLE_APPS = {
   overlay: () => {
+    const basePath = app.isPackaged
+      ? path.join(process.resourcesPath, "bin")
+      : path.join(__dirname, "..", "bin");
+
     // Path to a compiled Go server binary (replace with your real path).
-    const binary = path.join(
-      __dirname,
-      "..",
-      `overlay-${os.platform()}-${os.arch()}`,
-    );
+    const binary = path.join(basePath, `overlay-${os.platform()}-${os.arch()}`);
 
     if (!fs.existsSync(binary)) {
       throw new Error(`Go server binary not found at ${binary}`);
