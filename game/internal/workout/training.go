@@ -20,10 +20,15 @@ func FromString(workoutString string) (Workout, error) {
 	workoutSteps := strings.SplitSeq(workoutString, ";")
 	for s := range workoutSteps {
 		powerDuration := strings.Split(s, "-")
-		power := powerDuration[0]
-		duration := powerDuration[1]
+		startPower := powerDuration[0]
+		endPower := powerDuration[1]
+		duration := powerDuration[2]
 
-		pInt, err := strconv.Atoi(power)
+		pStartInt, err := strconv.Atoi(startPower)
+		if err != nil {
+			return nil, errors.New("could not parse workout")
+		}
+		pEndInt, err := strconv.Atoi(endPower)
 		if err != nil {
 			return nil, errors.New("could not parse workout")
 		}
@@ -32,7 +37,7 @@ func FromString(workoutString string) (Workout, error) {
 		if err != nil {
 			return nil, errors.New("could not parse workout")
 		}
-		w = append(w, NewSegment(time.Second*time.Duration(durationInt), Watts(pInt)))
+		w = append(w, NewSegment(time.Second*time.Duration(durationInt), Watts(pStartInt), Watts(pEndInt)))
 	}
 
 	return w, nil
@@ -40,9 +45,9 @@ func FromString(workoutString string) (Workout, error) {
 
 func NewRandom() Workout {
 	return []WorkoutSegment{
-		{Duration: 30 * time.Second, StartPower: 120, EndPower: 150},
-		NewSegment(30*time.Second, 120),
-		NewSegment(40*time.Minute, 195),
+		{Duration: 30 * time.Minute, StartPower: 120, EndPower: 200},
+		NewSegment(30*time.Second, 120, 120),
+		NewSegment(40*time.Minute, 195, 195),
 	}
 }
 
@@ -87,7 +92,9 @@ func TrainingPowerAt(training Workout, t time.Duration) int {
 	progr := t
 	for _, tr := range training {
 		if progr < tr.Duration {
-			return int(tr.StartPower)
+			rico := (float64(tr.EndPower) - float64(tr.StartPower)) / float64(tr.Duration)
+			p := int(rico*float64(progr)) + int(tr.StartPower)
+			return p
 		}
 		progr -= tr.Duration
 	}

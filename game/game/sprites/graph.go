@@ -48,28 +48,23 @@ func (m *graph) Draw(screen *ebiten.Image) {
 	for i, s := range t {
 		c := color.RGBA{85, 165, 34, 50}
 		w := scaleWidth(s, totalDuration, m.Width)
-		stepInSeconds := float64(w) / float64(s.Duration.Seconds())
-
 		if s.StartPower != s.EndPower {
-			rico := float64(s.EndPower-s.StartPower) / (float64(s.Duration.Seconds()))
-			a := s.EndPower - s.StartPower
-			for i := range w {
-				progress := i * int(stepInSeconds)
-				p := rico*float64(progress) + float64(a)
+			rico := float64(s.EndPower-s.StartPower) / float64(w)
+			for j := range w {
+				p := rico*float64(j) + float64(s.StartPower)
 				h := scaleHeight(t, p, screenHeight)
 				vector.DrawFilledRect(
 					screen,
-					float32(x),
+					float32(x+j),
 					float32(screenHeight-h),
-					float32(w),
+					1,
 					float32(h),
 					c,
 					true,
 				)
-				x += 1
 			}
-
-			return
+			x += w
+			continue
 		}
 
 		h := scaleHeightAtIndex(t, i, screenHeight)

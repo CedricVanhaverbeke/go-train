@@ -10,11 +10,11 @@ type WorkoutSegment struct {
 	EndPower   Watts
 }
 
-func NewSegment(d time.Duration, w Watts) WorkoutSegment {
+func NewSegment(d time.Duration, startW Watts, endW Watts) WorkoutSegment {
 	return WorkoutSegment{
 		Duration:   d,
-		StartPower: w,
-		EndPower:   w,
+		StartPower: startW,
+		EndPower:   endW,
 	}
 }
 

@@ -23,7 +23,7 @@ const AVAILABLE_APPS = {
 
     return {
       command: binary,
-      args: ["-mock", "true"],
+      args: [],
       options: { cwd: path.dirname(binary) },
     };
   },

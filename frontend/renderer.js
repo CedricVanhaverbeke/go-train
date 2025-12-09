@@ -1,6 +1,5 @@
 const { ipcRenderer } = require("electron");
 
-
 const { h, Component, render } = window;
 const html = window.htm.bind(h);
 
@@ -317,7 +316,13 @@ function WorkoutSteps({ steps, ftp }) {
   `;
 }
 
-function WorkoutDetail({ workout, onBack, desiredDuration, onDurationChange, ftp }) {
+function WorkoutDetail({
+  workout,
+  onBack,
+  desiredDuration,
+  onDurationChange,
+  ftp,
+}) {
   const totalDuration = workout.steps.reduce(
     (sum, step) => sum + step.duration,
     0,
@@ -345,7 +350,12 @@ function WorkoutDetail({ workout, onBack, desiredDuration, onDurationChange, ftp
           <div
             class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex justify-center"
           >
-            <${WorkoutPreview} workout=${workout} width=${480} height=${160} ftp=${ftp} />
+            <${WorkoutPreview}
+              workout=${workout}
+              width=${480}
+              height=${160}
+              ftp=${ftp}
+            />
           </div>
         </section>
         <section class="space-y-3">
@@ -585,8 +595,7 @@ class App extends Component {
     const totalDuration = workout.totalDuration ?? getTotalDuration(workout);
     const workoutString = workout.steps
       .map(({ start_power, end_power, duration }) => {
-        const avgPower = (start_power + end_power) / 2;
-        return `${Math.ceil((avgPower / 100) * this.state.ftp)}-${duration}`;
+        return `${Math.ceil((start_power / 100) * this.state.ftp)}-${Math.ceil((end_power / 100) * this.state.ftp)}-${duration}`;
       })
       .join(";");
     this.setState(
