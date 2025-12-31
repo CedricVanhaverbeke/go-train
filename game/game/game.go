@@ -2,12 +2,12 @@ package game
 
 import (
 	"log"
+	"time"
+
 	"overlay/game/sprites"
 	"overlay/game/state"
 	"overlay/internal/workout"
 	"overlay/pkg/bluetooth"
-	"overlay/pkg/gpx"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kbinani/screenshot"
@@ -172,7 +172,7 @@ func (g *game) subscribe(tr *bluetooth.Device) {
 	g.subscribeCadence(tr)
 }
 
-func Run(training workout.Workout, trainer *bluetooth.Device, route gpx.Gpx, opts Opts) {
+func Run(training workout.Workout, trainer *bluetooth.Device, opts Opts) {
 	game := NewGame(training, trainer, opts)
 
 	ebiten.SetWindowDecorated(false)

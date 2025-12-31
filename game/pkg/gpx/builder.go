@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"overlay/pkg/bluetooth"
 	"sync"
-	"time"
+
+	"overlay/pkg/bluetooth"
 )
 
 type chanAvailability struct {
@@ -83,43 +83,22 @@ func (data *Gpx) Write(out io.Writer) error {
 // Build waits for a trackpoint
 // to be ready to be added to
 // the gpx struct
-func (data *Gpx) Build(trainer *bluetooth.Device, route *Gpx) {
+func (data *Gpx) Build(trainer *bluetooth.Device) {
 	power, cadence := setupChannels(trainer)
-	distance := 0.0
 
 	for {
-		before := time.Now()
-
 		powV, cadV := valuesWait(power, cadence)
-
-		after := time.Now()
-		timeD := (after.Sub(before)).Seconds()
-
-		vrel := route.Speed(distance, powV)
-
-		vrelms := vrel / 3.6
-
-		distance += vrelms * float64(timeD)
-		lat, lng, ele, _, _ := route.CoordInfo(distance)
-
 		slog.Info(
 			fmt.Sprintf(
-				"Adding trackpoint with power %d, cadence %d and speed %f, distance %f lat %f, lng %f",
+				"Adding trackpoint with power %d, cadence %d",
 				powV,
 				cadV,
-				vrel,
-				distance,
-				lat,
-				lng,
 			),
 		)
 
 		tp := NewTrackpoint(
-			lat,
-			lng,
 			WithPower(powV),
 			WithCadence(cadV),
-			WithElevation(ele),
 		)
 
 		data.AddTrackpoint(tp)

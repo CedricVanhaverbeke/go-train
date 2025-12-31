@@ -21,13 +21,11 @@ type trkpt struct {
 
 type trkOpt = func(trkpt *trkpt)
 
-func NewTrackpoint(lat float64, lng float64, opts ...trkOpt) trkpt {
+func NewTrackpoint(opts ...trkOpt) trkpt {
 	pt := trkpt{}
 
 	time := time.Now().Format(time.RFC3339)
 	pt.Time = time
-	pt.Lat = lat
-	pt.Lon = lng
 
 	for _, opt := range opts {
 		opt(&pt)

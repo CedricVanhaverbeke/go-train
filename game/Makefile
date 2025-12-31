@@ -1,5 +1,5 @@
 mock:
-	go run main.go -workout "108-600;216-600;270-900;162-600;270-900;203-300;108-300" -mock true
+	go run main.go -workout "108-108-600;216-216-600;270-270-900;162-150-600;270-280-900;203-190-300;108-108-300" -mock true
 build:
 	GOOS=windows GOARCH=amd64 go build -o ../bin/overlay-windows-amd64 
 	GOOS=windows GOARCH=arm go build -o ../bin/overlay-windows-arm 

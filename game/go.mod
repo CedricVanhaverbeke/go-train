@@ -1,12 +1,13 @@
 module overlay
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/hajimehoshi/ebiten/v2 v2.8.3
 	github.com/kbinani/screenshot v0.0.0-20240820160931-a8a2c5d0e191
 	go.uber.org/mock v0.5.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
+	golang.org/x/image v0.23.0
 	tinygo.org/x/bluetooth v0.10.0
 )
 
@@ -16,7 +17,6 @@ require (
 	github.com/ebitengine/purego v0.8.0 // indirect
 	github.com/gen2brain/shm v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-text/typesetting v0.2.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e // indirect
@@ -26,7 +26,6 @@ require (
 	github.com/soypat/seqs v0.0.0-20240527012110-1201bab640ef // indirect
 	github.com/tinygo-org/cbgo v0.0.4 // indirect
 	github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 // indirect
-	golang.org/x/image v0.23.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect

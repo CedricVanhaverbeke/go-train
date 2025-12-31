@@ -2,19 +2,18 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"os/signal"
-	"overlay/game"
-	"overlay/internal/route"
-	"overlay/internal/workout"
-	"overlay/pkg/bluetooth"
-	"overlay/pkg/gpx"
 	"path"
 	"strings"
 	"time"
+
+	"overlay/game"
+	"overlay/internal/workout"
+	"overlay/pkg/bluetooth"
+	"overlay/pkg/gpx"
 )
 
 var mock = flag.Bool(
@@ -70,8 +69,6 @@ func newTraining() {
 		}
 	}
 
-	helloWorldRoute := route.NewExample()
-
 	title := "Hello World Ride"
 	gpxFile := gpx.New(title)
 
@@ -86,10 +83,8 @@ func newTraining() {
 
 	// use the data to build a gpx file
 	go func() {
-		gpxFile.Build(trainer, &helloWorldRoute)
+		gpxFile.Build(trainer)
 	}()
-
-	fmt.Println("distance of route (in m)", helloWorldRoute.Distance())
 
 	// use the data to run the game
 	// the game needs to run in the main thread according
@@ -110,7 +105,7 @@ func newTraining() {
 		}
 	}()
 
-	game.Run(training, trainer, helloWorldRoute, opts)
+	game.Run(training, trainer, opts)
 
 	slog.Info("Game ended")
 	err = writeGpxToFile(fileTitle, gpxFile)
