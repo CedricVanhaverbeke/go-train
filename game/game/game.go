@@ -2,6 +2,7 @@ package game
 
 import (
 	"log"
+	"sync/atomic"
 	"time"
 
 	"overlay/game/sprites"
@@ -65,7 +66,7 @@ func (g *game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (g *game) Update() error {
-	if !g.State.Progress.Started {
+	if g.State.Progress.Pause {
 		return nil
 	}
 
@@ -168,8 +169,19 @@ func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *ga
 }
 
 func (g *game) subscribe(tr *bluetooth.Device) {
-	g.subscribePwr(tr)
+	var pauseCounter atomic.Int32
+	g.subscribePwr(tr, &pauseCounter)
 	g.subscribeCadence(tr)
+
+	// if ten subsequent readings were zero,
+	// we pause the game
+	go func() {
+		for range time.Tick(1 * time.Second) {
+			if pauseCounter.Load() >= 5 {
+				g.State.Progress.Pause = true
+			}
+		}
+	}()
 }
 
 func Run(training workout.Workout, trainer *bluetooth.Device, opts Opts) {

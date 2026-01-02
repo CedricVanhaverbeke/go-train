@@ -34,9 +34,16 @@ func (p *errorCadenceChar) Write(power int) (int, error) {
 // ContinuousRead extracts instantaneous power (signed 16-bit integer, little-endian)
 func (p *mockPowerChar) ContinuousRead() error {
 	go func() {
+		i := 0
 		for {
-			p.listeners.WriteValue(200)
+			// simulate pause
+			if i > 2 && i < 10 {
+				p.WriteValue(0)
+			} else {
+				p.WriteValue(200)
+			}
 			time.Sleep(2 * time.Second)
+			i++
 		}
 	}()
 
