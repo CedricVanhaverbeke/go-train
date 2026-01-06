@@ -121,7 +121,7 @@ func getCurrentMonitorSize() (int, int) {
 	return width, height
 }
 
-func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *game {
+func NewGame(training *workout.Workout, trainer *bluetooth.Device, opts Opts) *game {
 	w, h := getCurrentMonitorSize()
 	now := time.Now()
 
@@ -130,7 +130,7 @@ func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *ga
 		slog.Error("could not create timer: ", err)
 	}
 
-	totalTimer, err := sprites.NewTotalTimer(workout.Duration(training))
+	totalTimer, err := sprites.NewTotalTimer(workout.Duration(*training))
 	if err != nil {
 		slog.Error("could not create total timer: ", err)
 	}
@@ -151,7 +151,7 @@ func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *ga
 		start:  now,
 		timer:  now,
 		sprites: []sprites.Spriter{
-			sprites.NewTrainingGraph(w, h, 500, 200, training),
+			sprites.NewTrainingGraph(w, h, 500, 200, *training),
 			timer,
 			totalTimer,
 			power,
@@ -159,7 +159,7 @@ func NewGame(training workout.Workout, trainer *bluetooth.Device, opts Opts) *ga
 		},
 		State: state.GameState{
 			Progress: state.NewProgress(),
-			Training: training,
+			Training: *training,
 		},
 		trainer: trainer,
 		opts:    opts,
@@ -184,7 +184,7 @@ func (g *game) subscribe(tr *bluetooth.Device) {
 	}()
 }
 
-func Run(training workout.Workout, trainer *bluetooth.Device, opts Opts) {
+func Run(training *workout.Workout, trainer *bluetooth.Device, opts Opts) {
 	game := NewGame(training, trainer, opts)
 
 	ebiten.SetWindowDecorated(false)

@@ -3,9 +3,10 @@ package sprites
 import (
 	"fmt"
 	"image/color"
+	"time"
+
 	"overlay/game/state"
 	"overlay/internal/workout"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -49,7 +50,7 @@ func (t *StepTimer) Update(s state.GameState) {
 
 	var timeInPreviousSegments time.Duration
 	for i := 0; i < index; i++ {
-		timeInPreviousSegments += s.Training[i].Duration
+		timeInPreviousSegments += s.Training.Segments[i].Duration
 	}
 
 	timeInCurrentSegment := s.Progress.Duration() - timeInPreviousSegments

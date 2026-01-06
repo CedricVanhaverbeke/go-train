@@ -1,10 +1,11 @@
 package sprites
 
 import (
-	"image/color"
 	"overlay/game/state"
 	"overlay/internal/workout"
 	"time"
+
+	gameColor "overlay/internal/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -45,8 +46,14 @@ func (m *graph) Draw(screen *ebiten.Image) {
 	_, currentSegmentIndex := workout.TrainingSegmentAt(t, m.gameState.Progress.Duration())
 
 	x := m.x
-	for i, s := range t {
-		c := color.RGBA{85, 165, 34, 50}
+	for i, s := range t.Segments {
+		c := gameColor.PowerToColor(((float64(s.StartPower) + float64(s.EndPower)) / 2), float64(t.FTP))
+		if i == currentSegmentIndex {
+			if int(m.gameState.Progress.Duration().Seconds())%2 == 1 {
+				c.A = 0
+			}
+		}
+
 		w := scaleWidth(s, totalDuration, m.Width)
 		if s.StartPower != s.EndPower {
 			rico := float64(s.EndPower-s.StartPower) / float64(w)
@@ -68,9 +75,6 @@ func (m *graph) Draw(screen *ebiten.Image) {
 		}
 
 		h := scaleHeightAtIndex(t, i, screenHeight)
-		if i == currentSegmentIndex {
-			c = color.RGBA{255, 165, 34, 50}
-		}
 		vector.DrawFilledRect(
 			screen,
 			float32(x),
@@ -94,7 +98,7 @@ func scaleWidth(s workout.WorkoutSegment, totalDuration time.Duration, totalWidt
 
 // scaleHeightAtIndex calculates the height of a training block depending on the screen height
 func scaleHeightAtIndex(s workout.Workout, index int, screenHeight int) int {
-	p := float64(s[index].EndPower)
+	p := float64(s.Segments[index].EndPower)
 	return scaleHeight(s, p, screenHeight)
 }
 

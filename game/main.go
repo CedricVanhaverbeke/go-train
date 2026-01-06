@@ -14,6 +14,7 @@ import (
 	"overlay/internal/workout"
 	"overlay/pkg/bluetooth"
 	"overlay/pkg/gpx"
+	"overlay/pkg/repo"
 )
 
 var mock = flag.Bool(
@@ -38,21 +39,7 @@ func newMockDevice() (*bluetooth.Device, error) {
 	return &trainer, nil
 }
 
-func writeGpxToFile(fileTitle string, gpxFile gpx.Gpx) error {
-	file, err := os.Create(fileTitle)
-	if err != nil {
-		return err
-	}
-
-	err = gpxFile.Write(file)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func newTraining() {
+func newTraining(gpxRepo *repo.GPXRepo) {
 	flag.Parse()
 
 	trainer, err := newDevice()
@@ -96,7 +83,7 @@ func newTraining() {
 	go func() {
 		for range c {
 			slog.Info("Program interrupted, writing to file...")
-			err = writeGpxToFile(fileTitle, gpxFile)
+			_, err = gpxRepo.Create("test", gpxFile)
 			if err != nil {
 				slog.Error(err.Error())
 			}
@@ -108,7 +95,7 @@ func newTraining() {
 	game.Run(training, trainer, opts)
 
 	slog.Info("Game ended")
-	err = writeGpxToFile(fileTitle, gpxFile)
+	_, err = gpxRepo.Create("test", gpxFile)
 	if err != nil {
 		slog.Error(err.Error())
 	}
@@ -121,5 +108,10 @@ func newTraining() {
 }
 
 func main() {
-	newTraining()
+	p, _ := os.Getwd()
+	repo, err := repo.NewGPXRepo(path.Join(p, "../", "db"))
+	if err != nil {
+		panic(err)
+	}
+	newTraining(repo)
 }
