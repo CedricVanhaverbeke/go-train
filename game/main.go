@@ -4,10 +4,8 @@ import (
 	"flag"
 	"log/slog"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
-	"strings"
 	"time"
 
 	"overlay/game"
@@ -56,17 +54,10 @@ func newTraining(gpxRepo *repo.GPXRepo) {
 		}
 	}
 
-	title := "Hello World Ride"
-	gpxFile := gpx.New(title)
+	gpxFile := gpx.New(training.Name)
 
 	// listen for data of the trainer
 	trainer.Listen()
-
-	fileTitle := strings.ReplaceAll(title, " ", "_")
-	fileTitle += ".gpx"
-
-	dir, _ := os.Getwd()
-	gpxFile.Path = path.Join(dir, fileTitle)
 
 	// use the data to build a gpx file
 	go func() {
@@ -83,7 +74,7 @@ func newTraining(gpxRepo *repo.GPXRepo) {
 	go func() {
 		for range c {
 			slog.Info("Program interrupted, writing to file...")
-			_, err = gpxRepo.Create("test", gpxFile)
+			_, err = gpxRepo.Create(training.Name, gpxFile)
 			if err != nil {
 				slog.Error(err.Error())
 			}
@@ -95,13 +86,7 @@ func newTraining(gpxRepo *repo.GPXRepo) {
 	game.Run(training, trainer, opts)
 
 	slog.Info("Game ended")
-	_, err = gpxRepo.Create("test", gpxFile)
-	if err != nil {
-		slog.Error(err.Error())
-	}
-
-	cmd := exec.Command("open", "-a", "GpxSee", gpxFile.Path)
-	err = cmd.Run()
+	_, err = gpxRepo.Create(training.Name, gpxFile)
 	if err != nil {
 		slog.Error(err.Error())
 	}

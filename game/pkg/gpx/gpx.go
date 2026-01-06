@@ -4,9 +4,10 @@ import (
 	"encoding/xml"
 	"fmt"
 	"math"
+	"time"
+
 	"overlay/internal/angle"
 	"overlay/internal/physics"
-	"time"
 )
 
 var XSI = `@xmlns:xsi:http://www.w3.org/2001/XMLSchema-instance
@@ -36,7 +37,6 @@ type trk struct {
 }
 
 type Gpx struct {
-	Path           string   `xml:"-"`
 	XMLName        xml.Name `xml:"gpx"`
 	Text           string   `xml:",chardata"`
 	Xsi            string   `xml:"xsi,attr"`

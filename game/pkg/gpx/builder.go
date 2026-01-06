@@ -2,9 +2,7 @@ package gpx
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
-	"log/slog"
 	"sync"
 
 	"overlay/pkg/bluetooth"
@@ -88,13 +86,6 @@ func (data *Gpx) Build(trainer *bluetooth.Device) {
 
 	for {
 		powV, cadV := valuesWait(power, cadence)
-		slog.Info(
-			fmt.Sprintf(
-				"Adding trackpoint with power %d, cadence %d",
-				powV,
-				cadV,
-			),
-		)
 
 		tp := NewTrackpoint(
 			WithPower(powV),
