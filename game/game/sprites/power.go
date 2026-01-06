@@ -2,8 +2,9 @@ package sprites
 
 import (
 	"image/color"
-	"overlay/game/state"
 	"strconv"
+
+	"overlay/game/state"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -43,6 +44,6 @@ func (p *power) Update(state state.GameState) {
 }
 
 func (p *power) Draw(screen *ebiten.Image) {
-	text.Draw(screen, p.text, p.font, screen.Bounds().Dx()-150, 100, color.White)
+	dx := len(p.text) * 20
+	text.Draw(screen, p.text, p.font, screen.Bounds().Dx()-50-dx, 100, color.White)
 }
-
