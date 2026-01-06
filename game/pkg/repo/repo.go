@@ -59,7 +59,7 @@ func (r *GPXRepo) Create(name string, gpxData gpx.Gpx) (*GPXRecord, error) {
 		return nil, fmt.Errorf("failed to marshal GPX data: %w", err)
 	}
 
-	now := time.Now()
+	now := time.Now().Round(0)
 	query := `
 	INSERT INTO gpx_files (name, data, created_at, updated_at)
 	VALUES (?, ?, ?, ?)

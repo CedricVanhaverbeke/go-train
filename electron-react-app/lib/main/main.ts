@@ -129,7 +129,6 @@ function getGpxFiles(event) {
     if (err) {
       event.reply('GPX_FILES_ERROR', err.message)
     } else {
-      console.log(rows)
       event.reply('GPX_FILES_DATA', rows)
     }
     db.close()

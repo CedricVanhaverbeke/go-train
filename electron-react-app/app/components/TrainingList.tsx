@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { TrainingFile } from '../types'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+dayjs.extend(customParseFormat)
 
 interface TrainingListProps {
   onBack: () => void
@@ -75,13 +78,8 @@ const TrainingList: React.FC<TrainingListProps> = ({ onBack: _onBack }) => {
   }
 
   const formatDate = (dateString: string): string => {
-    if (!dateString) return 'Unknown date'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
-    } catch (error) {
-      return 'Invalid date'
-    }
+    const date = dayjs(dateString, 'YYYY-MM-DD HH:mm:ss.SSSSSS ZZ')
+    return date.format('DD MMMM, YYYY')
   }
 
   return (
