@@ -6,6 +6,7 @@ build:
 	GOOS=windows GOARCH=arm64 go build -o ../bin/overlay-windows-arm64 
 	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o ../bin/overlay-darwin-amd64 
 	GOOS=darwin GOARCH=arm64 go build -o ../bin/overlay-darwin-arm64 
+	cp ../bin/overlay-* ../electron-react-app/bin/ 
 
 build-linux:
 	CC=x86_64-linux-gnu-gcc CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o ../bin/overlay-linux-amd64

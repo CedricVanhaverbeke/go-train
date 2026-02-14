@@ -73,13 +73,18 @@ const App: React.FC<AppProps> = ({
   )
 
   const selectWorkout = useCallback(
-    (workout: Workout) => {
+    (workout: Workout, ftp: number) => {
       const totalDuration = workout.totalDuration ?? getTotalDuration(workout)
-      const workoutString = workout.steps
-        .map(({ start_power, end_power, duration }) => {
-          return `${Math.ceil((start_power / 100) * ftp)}-${Math.ceil((end_power / 100) * ftp)}-${duration}`
-        })
-        .join(';')
+      const workoutString =
+        workout.name +
+        ';' +
+        `${ftp}` +
+        ';' +
+        workout.steps
+          .map(({ start_power, end_power, duration }) => {
+            return `${Math.ceil((start_power / 100) * ftp)}-${Math.ceil((end_power / 100) * ftp)}-${duration}`
+          })
+          .join(';')
 
       setSelectedWorkout(workout)
       setSelectedWorkoutTargetDuration(totalDuration)
